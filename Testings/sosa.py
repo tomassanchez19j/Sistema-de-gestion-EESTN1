@@ -1,7 +1,13 @@
 #agregar atributo entregado al registro
-from conexion.userConexion import ConexionUser
+from conexion.conexion import conexion
+from dotenv import load_dotenv
+import os
 
-conexion = ConexionPG()
+dotenv.load()
+
+var = os.getenv("DSNUSER")
+
+conexion = conexion(var)
 cur = conexion.cur()
 
 

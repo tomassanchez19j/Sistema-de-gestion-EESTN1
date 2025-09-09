@@ -18,6 +18,13 @@ class UniqueItem(self, marca, categoria, modelo):
         self.modelo = modelo
 
 
-
+#El isReusable es para las cosas que son reusables(es bool) o no
+#No reusable 
 class StockItem(self, marca, categoria, modelo, cantidad, disponible, isReusable):
+    self.marca = marca
+    self.categoria = categoria
+    self.modelo = modelo
+    self.cantidad = cantidad
+    self.disponible = disponible
+    self.isReusable
 

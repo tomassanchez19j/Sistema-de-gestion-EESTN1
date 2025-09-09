@@ -4,12 +4,18 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-class ConexionUser:
+class Conexion:
 
-    def __init__(self):
-        self.dsn = os.getenv("DSNUSER")
+    def __init__(self, dsn):
+        #Va a ser una  misma clase conexion para todo crea una conexion en tu repositorio y desde el  constructor pasaletu DSN que necesites
+        #definido en .env 
+        #mira de ejemplo userRepo
+        
+        self.dsn = self.dsn
         self.connection = psycopg2.connect(self.dsn)
         self.cursor = self.connection.cursor()
+
+    def
         
     def cur(self):
         return self.cursor
