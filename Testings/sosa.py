@@ -29,6 +29,13 @@ CREATE TABLE IF NOT EXISTS personal (
 """)
 
 
+
+#cur.execute("""
+#ALTER TABLE personal
+#ADD COLUMN password TEXT NOT NULL
+#""")
+
+
 cur.execute("""
 CREATE TABLE IF NOT EXISTS profesores (
     user_id INTEGER PRIMARY KEY,
@@ -47,14 +54,45 @@ CREATE TABLE IF NOT EXISTS alumnos (
 """)
 
 
+cur.execute("""
+CREATE TABLE IF NOT EXISTS CURSOS(
+    id INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    año INTEGER NOT NULL,
+    division INTEGER NOT NULL,
+    ciclo TEXT NOT NULL,
+    especialidad TEXT
 
-cur.execute(
-    "INSERT INTO users (nombre, apellido) VALUES (%s, %s) RETURNING id",
-    ("Lautaro", "Sosa")
 )
+""")
 
-user_id = cur.fetchone()[0]
-conexion.commit()
+cur.execute("""
+CREATE TABLE IF NOT EXISTS profesores_cursos(
+    id INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    profesor_id INTEGER NOT NULL,
+    curso_id INTEGER NOT NULL,
+    FOREIGN KEY (profesor_id) REFERENCES profesores (user_id),
+    FOREIGN KEY (curso_id) REFERENCES cursos (ID)
+
+)
+""")
+
+
+"""cur.execute(
+    "INSERT INTO users (nombre, apellido) VALUES (%s, %s) RETURNING id",
+    ("Tomaz", "Sanchez")
+)"""
+
+
+"""user_id = cur.fetchone()[0]
+
+"""
+
+cur.execute("""
+CREATE TABLE IF NOT EXISTS cursos(
+
+
+)""")
+
 
 
 cur.execute("SELECT id, nombre, apellido FROM users")
