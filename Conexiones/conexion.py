@@ -11,7 +11,7 @@ class Conexion:
         #definido en .env 
         #mira de ejemplo userRepo
         
-        self.dsn = self.dsn
+        self.dsn = dsn
         self.connection = psycopg2.connect(self.dsn)
         self.cursor = self.connection.cursor()
         

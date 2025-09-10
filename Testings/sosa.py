@@ -1,9 +1,9 @@
 #agregar atributo entregado al registro
-from conexion.conexion import conexion
+from conexion.conexion import Conexion
 from dotenv import load_dotenv
 import os
 
-dotenv.load()
+load.dotenv()
 
 var = os.getenv("DSNUSER")
 
