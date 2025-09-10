@@ -20,6 +20,10 @@ CREATE TABLE IF NOT EXISTS users  (
 )
 """)
 
+CUR.EXECUTE("""
+    CREATE TABLE IF NOT EXISTS staff ()
+""")
+
 cur.execute(
     "INSERT INTO productos (nombre, precio, stock) VALUES (%s, %s, %s)",
     ("Tostadora", 35000, 100)
