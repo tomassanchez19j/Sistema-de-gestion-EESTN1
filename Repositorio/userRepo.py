@@ -10,4 +10,6 @@ class UserRepo:
 
     def ver_usuarios(self):
         self.cur.execute("SELECT * FROM usuarios;")
-        return self.cur.fetchall()
+        usuarios = self.cur.fetchall()
+        return usuarios
+

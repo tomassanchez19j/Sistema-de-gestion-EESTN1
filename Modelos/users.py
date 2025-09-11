@@ -16,5 +16,5 @@ class Profesor(User):
 
 class Personal(User):
     def __init__(self, nombre, apellido, rol)
-        super().__init(nombre, apellido)
+        super().__init__(nombre, apellido)
         self.rol = rol

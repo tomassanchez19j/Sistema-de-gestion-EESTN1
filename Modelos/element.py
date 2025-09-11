@@ -1,5 +1,6 @@
 class Element:
     #ubicacion interna es en que stand lo ponen, ubicacion es el area(biblioteca, pañol, laboratorio, etc)
+    #Estado: disponible, en uso, no disponible
     def __init__(self, id_element, nombre, descripcion, estado, ubicacion, ubicacion_interna ):
         self.id = id_element
         self.nombre = nombre
@@ -19,7 +20,7 @@ class UniqueItem(self, marca, categoria, modelo):
 
 
 #El isReusable es para las cosas que son reusables(es bool) o no
-#No reusable 
+#Es reusable una escofina, una sierra. No es reusable un clavo, los guantes descartables del laboratorio, etc
 class StockItem(self, marca, categoria, modelo, cantidad, disponible, isReusable):
     self.marca = marca
     self.categoria = categoria
