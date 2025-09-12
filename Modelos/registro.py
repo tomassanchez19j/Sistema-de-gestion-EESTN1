@@ -10,23 +10,27 @@
 #pero en el caso de un profesor es una relacion de uno a muchos cursos
 
 #clase abstracta
+#11/9 Agrego id a todas las clases, les pongo 
+
+
 class Registro:
-    def __init__(self, usuario_id, elemento_id, fecha, hora, expiracion, estado):
+    def __init__(self, usuario_id, elemento_id, fecha, hora, expiracion, estado, destino, registro_id=None):
+        self.registro_id = registro_id
         self.usuario_id = usuario_id
         self.elemento_id = elemento_id
+        self.fecha = fecha
         self.hora = hora
         self.expiracion = expiracion
         self.estado = estado
         self.destino = destino
 
+
 class RegistroStock(Registro):
-    def __init__(self, usuario_id, elemento_id, fecha, hora, expiracion, estado, cantidad):
-        super().__init__(self, usuario_id, elemento_id, hora, expiracion, estado)
+    def __init__(self, usuario_id, elemento_id, fecha, hora, expiracion, estado, destino, cantidad, registro_id=None):
+        super().__init__(usuario_id, elemento_id, fecha, hora, expiracion, estado, destino, registro_id)
         self.cantidad = cantidad
 
 
-#Para items unicos: computadoras, libros, etc
 class RegistroItem(Registro):
-    def __init__(self, usuario_id, elemento_id, fecha, hora, expiracion, estado):
-        super().__init__(self, usuario_id, fecha, hora, expiracion, estado):
-
+    def __init__(self, usuario_id, elemento_id, fecha, hora, expiracion, estado, destino, registro_id=None):
+        super().__init__(usuario_id, elemento_id, fecha, hora, expiracion, estado, destino, registro_id)
