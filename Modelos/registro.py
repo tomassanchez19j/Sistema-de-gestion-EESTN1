@@ -1,3 +1,6 @@
+from pydantic import BaseModel
+from typing import Optional
+
 #Cada cosa que se preste va a saltar como registro. Si queremos ver que cosas se sacaron al mismo tiempo por una persona hacemos un join
 #Estado es para saber si ya se entregaron o no(capazbuscar otro nombre mas especifico)
 
@@ -11,26 +14,22 @@
 
 #clase abstracta
 #11/9 Agrego id a todas las clases, les pongo 
-
-
-class Registro:
-    def __init__(self, usuario_id, elemento_id, fecha, hora, expiracion, estado, destino, registro_id=None):
-        self.registro_id = registro_id
-        self.usuario_id = usuario_id
-        self.elemento_id = elemento_id
-        self.fecha = fecha
-        self.hora = hora
-        self.expiracion = expiracion
-        self.estado = estado
-        self.destino = destino
-
+#12/9 Cambie todas las clases a pydantic
+#Registro_id optional[int] = None me permite a veces poder armar objetos con el id a veces no
+#fijarse el repositorio de usuarios cuando debo crear un usuario, no puedo pasarle como parametro un id, ya que el id lo define la BD
+#al reves pasa cuando me quiero traer todos los uasuarios y pasarlo a un array de objeto, tengo que q traerme los id y ponerlos si o si
+class Registro(BaseModel):
+    registro_id: Optional[int] = None
+    usuario_id: int
+    elemento_id: int
+    fecha: str
+    hora: str
+    expiracion: str
+    estado: str
+    destino: str
 
 class RegistroStock(Registro):
-    def __init__(self, usuario_id, elemento_id, fecha, hora, expiracion, estado, destino, cantidad, registro_id=None):
-        super().__init__(usuario_id, elemento_id, fecha, hora, expiracion, estado, destino, registro_id)
-        self.cantidad = cantidad
-
+    cantidad: int
 
 class RegistroItem(Registro):
-    def __init__(self, usuario_id, elemento_id, fecha, hora, expiracion, estado, destino, registro_id=None):
-        super().__init__(usuario_id, elemento_id, fecha, hora, expiracion, estado, destino, registro_id)
+    pass

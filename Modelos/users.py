@@ -1,21 +1,17 @@
-class User:
-    def __init__(self,  nombre, apellido, id: int = None):
-        self.nombre = nombre
-        self.apellido = apellido
-    
+from pydantic import BaseModel
+from typing import Optional, List
+
+class User(BaseModel):
+    id_usuario: Optional[int] = None
+    nombre: str
+    apellido: str
 
 class Alumno(User):
-    def __init__(self, nombre, apellido, curso, orientacion):
-        super().__init__(nombre, apellido)
-        self.curso = curso
-        self.orientacion = orientacion
+    curso: str
+    orientacion: str
 
 class Profesor(User):
-    def __init__(self, nombre, apellido, cursos):
-        super().__init__(nombre, apellido)
-        self.cursos = cursos
+    cursos: List[str]
 
 class Personal(User):
-    def __init__(self, nombre, apellido, rol):
-        super().__init__(nombre, apellido)
-        self.rol = rol
+    rol: str
