@@ -1,5 +1,5 @@
 from Conexiones.conexion import Conexion
-from Modelos.users import User
+from Modelos.users import User, Alumno, Profesor, Personal
 
 class UserRepo:
     def __init__(self, conexion: Conexion):
@@ -31,6 +31,16 @@ class UserRepo:
         self.cur.execute("INSERT INTO users (nombre, apellido) VALUES (%s, %s);", (nombre, apellido))
         self.conexion.commit()
 
+    def crearUsuario(self, nUsuario):
+        self.cur.execute("INSER INTO user(nombre, apellido) VALUES (%s)")
+        if isinstance(User, Alumno):
+            nombre = nUsuario.nombre
+            apellido = nUsuario.apellido
+
+            
+####M3 queda terminar esto
+
+
     def borrar_usuario(self, id_usuario):
         self.cur.execute("DELETE FROM users WHERE id = %s;", (id_usuario,))
         self.conexion.commit()
@@ -41,4 +51,5 @@ class UserRepo:
         if registro:
             return User(registro[1], registro[2], registro[0])
         return None
+    
 

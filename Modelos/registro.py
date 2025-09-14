@@ -18,18 +18,19 @@ from typing import Optional
 #Registro_id optional[int] = None me permite a veces poder armar objetos con el id a veces no
 #fijarse el repositorio de usuarios cuando debo crear un usuario, no puedo pasarle como parametro un id, ya que el id lo define la BD
 #al reves pasa cuando me quiero traer todos los uasuarios y pasarlo a un array de objeto, tengo que q traerme los id y ponerlos si o si
+
+#El campo estado solo puede ser 3 cosas: Devuelto, en curso y consumido.
+#Consumido es para aquellos objetos Stock que tienen True en is_reusable, 
+#esto se sobreescribe en la capa de servicio if isReusable = True, registro_estado = consumido.
+
 class Registro(BaseModel):
     registro_id: Optional[int] = None
     usuario_id: int
-    elemento_id: int
+    element_id: int
+    cantidad: int
     fecha: str
     hora: str
     expiracion: str
     estado: str
     destino: str
 
-class RegistroStock(Registro):
-    cantidad: int
-
-class RegistroItem(Registro):
-    pass

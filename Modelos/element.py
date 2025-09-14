@@ -12,7 +12,12 @@ class Element(BaseModel):
     ubicacion_interna: str
 
 #UniqueItem es para los objetos unicos como las computadoras o herramientas
+#Recordar q lo elementos unicos tienen su propio codigo interno de identacion(text)
+#ver el caso de las computadoras, las zapatillas, etc
+#Me sirve para identificar mas rapido las cosas, se diferencia de StockItem q solo tiene su id heredado de elemento,
+#y no puede llegar a tener ningun id mas
 class UniqueItem(Element):
+    codigo_interno: str
     pass
 
 #El isReusable es para las cosas que son reusables (es bool) o no
