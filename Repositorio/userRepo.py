@@ -29,12 +29,13 @@ class UserRepo:
         apellido = nUsuario.apellido
  
         self.cur.execute("INSERT INTO users (nombre, apellido) VALUES (%s, %s)", (nombre, apellido))
-        self.conexion.commit()
+        self.cur.commit()
 
     def crearUsuario(self, nUsuario):
         nombre = nUsuario.nombre
         apellido = nUsuario.apellido
         self.cur.execute("""INSERT INTO user(nombre, apellido) VALUES (%s, %s), RETURNING id""", (nombre, apellido))
+        self.cur.commit()
         
         user_id = self.cur.fetchone()[0]
         if isinstance(User, Alumno):
@@ -44,14 +45,17 @@ class UserRepo:
             INSERT INTO alumnos(user_id, curso, especialidad)
             VALUES (%s, %s, %s)
             """, (user_id, curso, especialidad))
+            self.cur.commit()
 
         elif isinstance(User, Profesor):
             self.cur.execute("INSERT INTO profesores(user_id), VALUES (%s)", (user_id,))
+            self.cur.commit()
 
         elif isinstance(User, Personal):
             rol = nUsuario.rol
             password = nUsuario.password
             self.cur.execute("INSERT INTO personal(user_id, rol, password), VALUES (%s,%s)", (user_id, rol, password))
+            self.cur.commit()
             
             
             

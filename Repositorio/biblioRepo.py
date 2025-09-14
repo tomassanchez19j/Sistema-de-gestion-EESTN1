@@ -1,5 +1,5 @@
 from Conexiones.conexion import Conexion
-from Modelos.biblioteca import Libro
+from Modelos.biblioteca import Libro, Stock_biblioteca, UniqueI_biblioteca
 from Modelos.registro import Registro
 class BiblioRepo:
     def __init__(self, conexion: Conexion):
@@ -10,14 +10,15 @@ class BiblioRepo:
         #me retorno el id q crea cuando lo ingreso a la tabla
         #necesito ese id para poder crear ingresar el libro en la tabla libros pq esta como fk
         self.cur.execute("""
-            INSERT INTO inventario (nombre, descripcion, estado, ubicacion, ubicacion_interna)
-            VALUES (%s, %s, %s, %s, %s) 
+            INSERT INTO inventario (nombre, descripcion, estado, ubicacion, ubicacion_interna, tipo)
+            VALUES (%s, %s, %s, %s, %s, %s) 
             RETURNING element_id""", (
             nLibro.nombre,
             nLibro.descripcion,
             nLibro.estado,
             nLibro.ubicacion,
-            nLibro.ubicacion_interna
+            nLibro.ubicacion_interna,
+            nLibro.tipo
         ))
         element_id = self.cur.fetchone()[0]
 
@@ -60,12 +61,13 @@ class BiblioRepo:
                     ubicacion=registro[4], 
                     ubicacion_interna=registro[5], 
                     codigo_interno=registro[6], 
-                    ISBN=registro[7],
-                    autor=registro[8], 
-                    editorial=registro[9],
-                    categoria=registro[10], 
-                    publicacion_year=registro[11], 
-                    impresion_year=registro[12], 
+                    tipo=registro[7],
+                    ISBN=registro[8],
+                    autor=registro[9], 
+                    editorial=registro[10],
+                    categoria=registro[11], 
+                    publicacion_year=registro[12], 
+                    impresion_year=registro[13], 
                     pais=registro[13] )
             
             libros.append(nLibro)
@@ -74,7 +76,7 @@ class BiblioRepo:
     
     def buscarLibro(self, libro_id):
         self.cur.execute("""
-        SELECT i.element_id, i.nombre, i.descripcion, i.estado, i.ubicacion, i.ubicacion_interna,
+        SELECT i.element_id, i.nombre, i.descripcion, i.estado, i.ubicacion, i.ubicacion_interna, i.tipo,
         l.codigo_interno, l.ISBN, l.autor, l.editorial, l.categoria, l.publicacion_year, l.impresion_year, l.pais
         FROM libros l
         JOIN inventario i ON l.inventario_id = i.element_id
@@ -89,16 +91,96 @@ class BiblioRepo:
                     estado=res[3], 
                     ubicacion=res[4], 
                     ubicacion_interna=res[5], 
-                    codigo_interno=res[6], 
-                    ISBN=res[7],
-                    autor=res[8], 
-                    editorial=res[9],
-                    categoria=res[10], 
-                    publicacion_year=res[11], 
-                    impresion_year=res[12], 
-                    pais=res[13] )
+                    codigo_interno=res[6],
+                    tipo=res[7],
+                    ISBN=res[8],
+                    autor=res[9], 
+                    editorial=res[10],
+                    categoria=res[11], 
+                    publicacion_year=res[12], 
+                    impresion_year=res[13], 
+                    pais=res[14] )
         
         return nLibro
+    
+    def buscarElemento(self, id_element):
+        #Necesito una funcion q me retorne el elemento q se esta solicitando
+        #Tengo q hacer un Left Join
+        #Hago un select de todas las tablas q me interesan(inventario, libros, stockItem, uniqueItem (i,l,s,u))
+
+        self.cur.execute("""
+        SELECT i.*, l.*, s.*, u*
+        FROM inventario i
+        LEFT JOIN libros l ON l.inventario_id = i.element_id
+        LEFT JOIN stockitem_library s on s.inventario_id = i.element_id
+        LEFT JOIN uniqueitem_library u on u.inventario_id = i.element_id
+        WHERE element_id = (%s)
+        """, (id_element))
+
+        res = self.cur.fetchone()
+
+        idElement = res[0]
+        nombre = res[1]
+        descripcion = res[2]
+        estado = res[3]
+        ubicacion = res[4]
+        ubicacion_interna = res[5]
+        tipo = res[6]
+
+        if (tipo == "Libro"):
+
+            nLibro = Libro(
+            id_element=idElement,
+            nombre=nombre,
+            descripcion=descripcion,
+            estado=estado,
+            ubicacion=ubicacion,
+            ubicacion_interna=ubicacion_interna,
+            tipo=tipo,
+            codigo_interno=res[8],
+            ISBN=res[9],
+            autor=res[10], 
+            editorial=res[11],
+            categoria=res[12], 
+            publicacion_year=res[13], 
+            impresion_year=res[14], 
+            pais=res[15])
+        
+            return nLibro
+        
+        elif(tipo =="UniqueI_biblioteca"):
+            nUniqueI_Biblioteca = UniqueI_biblioteca(
+            id_element=idElement,
+            nombre=nombre,
+            descripcion=descripcion,
+            estado=estado,
+            ubicacion=ubicacion,
+            ubicacion_interna=ubicacion_interna,
+            tipo=tipo,
+            codigo_interno=res[8],
+
+            )
+            return nUniqueI_Biblioteca
+        
+        elif(tipo=="Stock_biblioteca"):
+            nStock_biblioteca = Stock_biblioteca(
+            id_element=idElement,
+            nombre=nombre,
+            descripcion=descripcion,
+            estado=estado,
+            ubicacion=ubicacion,
+            ubicacion_interna=ubicacion_interna,
+            tipo=tipo,
+            cantidad=res[8],
+            disponibles=res[9],
+            isReusable= res[10]
+            )
+
+            return nStock_biblioteca
+        
+
+
+
     
     def buscarEstado(self, id_element):
         self.cur.execute("""

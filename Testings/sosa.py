@@ -3,6 +3,8 @@ from Repositorio.userRepo import UserRepo
 from Repositorio.biblioRepo import BiblioRepo
 from Modelos.users import User
 from Modelos.biblioteca import Libro
+
+from datetime import datetime, time
 from dotenv import load_dotenv
 import os
 
@@ -81,7 +83,45 @@ CREATE TABLE IF NOT EXISTS registros (
 );
 """)
 
+#cursor.execute("""
+#    ALTER TABLE registros
+#    ALTER COLUMN expiracion DROP NOT NULL
+#""")
+
 Conexion_biblioteca.commit()
+
+#cursor.execute("""
+#DELETE FROM inventario
+#WHERE element_id IN (1, 2);
+#""")
+
+
+#cursor.execute("""
+#ALTER TABLE inventario
+#ADD COLUMN tipo TEXT;
+#""")
+
+ahora = datetime.now()
+hora = ahora.time()
+turnos = [
+            (time(7,40), time(11,40)),
+            (time(13,10), time(17,20)),
+            (time(17,40), time(21,30))
+        ]
+
+
+for inicio, fin in turnos:
+    print(inicio.strftime("%H:%M"), " a ", fin.strftime("%H:%M"))
+    
+    if( inicio < hora < fin):
+        print(hora)
+        print(f"Es en este turno") 
+    else:
+        print(hora)
+        print(f"No es en este turno")
+
+
+#Conexion_biblioteca.commit()
 """
 nlibro = Libro(
     nombre="El principito",
@@ -122,7 +162,7 @@ repositorio_biblioteca.crearLibro(nlibro1)
 """
 
 
-
+"""
 libros = repositorio_biblioteca.verLibros()
 for libro in libros:
     print(f"Id:{libro.id_element} Titulo: {libro.nombre}, Autor: {libro.autor}, Pais: {libro.pais}")
@@ -131,7 +171,7 @@ libro = repositorio_biblioteca.buscarLibro(2)
 estado = repositorio_biblioteca.buscarEstado(2)
 
 print(f"JSAKKKKKKKKKKK {estado}")
-print(f"jUASJUASJUAS Id:{libro.id_element} Titulo: {libro.nombre}, Autor: {libro.autor}, Pais: {libro.pais}")
+print(f"jUASJUASJUAS Id:{libro.id_element} Titulo: {libro.nombre}, Autor: {libro.autor}, Pais: {libro.pais}")"""
 
 
 """usuarios = repositorio.ver_usuarios()

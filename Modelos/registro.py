@@ -23,14 +23,20 @@ from typing import Optional
 #Consumido es para aquellos objetos Stock que tienen True en is_reusable, 
 #esto se sobreescribe en la capa de servicio if isReusable = True, registro_estado = consumido.
 
-class Registro(BaseModel):
-    registro_id: Optional[int] = None
-    usuario_id: int
+#13/9, agrego una herencia mas a Registro
+#Entiendase que RegistroBase es lo q se recibe del frontened, es el "pedido"
+#El registro que va cargado en la bd es Registro y se completan sus atributos(fecha, hora, etc) en la capa de servicio
+class RegistroBase(BaseModel):
     element_id: int
     cantidad: int
+    destino: str
+
+class Registro(RegistroBase):
+    registro_id: Optional[int] = None
+    usuario_id: int
     fecha: str
     hora: str
     expiracion: str
     estado: str
-    destino: str
+
 
