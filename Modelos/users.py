@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-from typing import Optional, List
+from typing import Optional
 
 class User(BaseModel):
     id_usuario: Optional[int] = None
@@ -8,10 +8,11 @@ class User(BaseModel):
 
 class Alumno(User):
     curso: str
-    orientacion: str
+    especialidad: str
 
 class Profesor(User):
-    cursos: List[str]
+    pass
 
 class Personal(User):
     rol: str
+    password: str
