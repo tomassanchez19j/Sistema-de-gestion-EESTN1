@@ -4,8 +4,8 @@ from Repositorio.userRepo import UserRepo
 from Modelos.element import StockItem
 from Modelos.users import User, Alumno, Profesor, Personal
 from Modelos.registro import Registro, RegistroBase
-
-from datetime import datetime, time
+from Modelos.biblioteca import Libro
+from datetime import datetime, time, timedelta
 
 class BiblioService:
     def __init__(self, biblioteca: BiblioRepo, usuarios: UserRepo):
@@ -22,8 +22,10 @@ class BiblioService:
     #aca se pasa algo como ahora = datetime.now()
     #Esta funcion retorna lo q va en expiracion que puede ser 11:40, 17:20,21:30
     #Es decir el tiempo limite q se tiene para entregar
+
     def calcularExpiracion(ahora):
         hora = ahora.time()
+        fecha = ahora.date()
         turnos = [
             (time(7,40), time(11,40)),
             (time(13,10), time(17,20)),
@@ -34,7 +36,8 @@ class BiblioService:
         
     
             if( inicio < hora < fin):
-                return fin
+
+                return datetime.combine(fecha, fin)
         
 
 
@@ -42,66 +45,77 @@ class BiblioService:
 
         
             
-
+    #yo debo de recibir del frontened, un usuario(alumno, profesor, etc) y un registro base
+    #si el usuario viene sin id es pq no esta en la bd (hacer funcion para eso), entonces lo creo
     def prestar(self, usuario: User, registro_base: RegistroBase):
 
-        #Esto me tiene que devolver Disponible, No disponible
+        #esto me tiene que devolver Disponible, No disponible
         estado = self.biblioteca.buscarEstado(registro_base.element_id)
-        if(estado == "Disponible"):
-            elemento = self.biblioteca.buscarElemento()
-            cantidad = registro_base.cantidad
 
-            ahora = datetime.now()
-            fecha = ahora.date()
-            hora = ahora.time()
+        #pensar q retornar aca
+        if (estado != "Disponible"):
+            return {"No esta disponible"}
+
+        
+        if (usuario.id_usuario == None):
+            usuario.id_usuario = self.usuarios.crearUsuario(usuario)
+            print("usuario.id_usuario asignado:", usuario.id_usuario) 
+            
+        #acordarme de hacerle un alter table a la tabla esta de relacion para agreegarle la columna materia
+        if isinstance(usuario, Profesor):
+            if not (self.usuarios.buscarRelacionProfesorCurso(registro_base.destino, usuario.id_usuario)):
+                self.usuarios.vincularCursoProfesor(registro_base.destino ,usuario.id_usuario)
 
 
-            if(usuario.id):
-                
-                if isinstance(elemento, StockItem):
-                    #Esto es un booleano
-                    isReusable = elemento.isReusable
 
-                    if(isReusable):
-                        estado = "En curso"
-                        expiracion = self.calcularExpiracion(hora)
 
-                        nRegistro = Registro(
-                            element_id=registro_base.element_id,
-                            cantidad = cantidad,
-                            destino = registro_base.destino,
-                            usuario_id=usuario.id,
-                            fecha=fecha,
-                            hora=hora,
-                            expiracion=expiracion,
-                            estado=estado
+        elemento = self.biblioteca.buscarElemento(registro_base.element_id)
+        cantidad = registro_base.cantidad
+        ahora = datetime.now()
+        fecha = ahora.date()
+        hora = ahora.time()
+        
 
-                        )
-                        self.biblioteca.crearRegistro(nRegistro)
-                        
-                    #Porque si no es reusable es consumible y no lo voy a tener que esperar a que sea devuelto
-                    else:
-                        estado = "Consumido"
-                        expiracion = None
+        #si es un libro la expiracion se realiza de +7 dias(es ejemplificativo)
+        if isinstance(elemento, Libro):
+            expiracion = fecha + timedelta(days=7)
+        else:
+            expiracion = self.calcularExpiracion(ahora)
 
-                        nRegistro = Registro(
-                            element_id=registro_base.element_id,
-                            cantidad = cantidad,
-                            destino = registro_base.destino,
-                            usuario_id=usuario.id,
-                            fecha=fecha,
-                            hora=hora,
-                            expiracion=expiracion,
-                            estado=estado
+        #si es un stock y es reusable el estado es En curso
+        #pero si es un elemento q no es reusable(osea q es descartable), nunca voy a tener q esperar a que se devuelva
+        #directamente lo marco como consumido
+        #lo mismo aplica para su expiracion, es un registro q nace "expirado" pq nunca se debe devolver
+        if isinstance(elemento, StockItem) and elemento.isReusable:
+            estado = "En curso"
+        
+        elif isinstance(elemento, StockItem):
+            estado = "Consumido"
+            expiracion = None
+        else:
+            estado = "En curso"
 
-                        )
-                        self.biblioteca.crearRegistro(nRegistro)
+        nRegistro = Registro(
+            element_id=registro_base.element_id,
+            cantidad=cantidad,
+            destino=registro_base.destino,
+            usuario_id=usuario.id_usuario,
+            fecha=fecha,
+            hora=hora,
+            expiracion=expiracion,
+            estado=estado
+        )
 
-                    
-                
-            else:
-                self.usuarios.crear_usuario(usuario)
-                self.biblioteca.crearRegistro(Registro)
+        self.biblioteca.crearRegistro(nRegistro)
+
+        #Si es un stockitem le tengo q restar las cantidades q estan en uso, y actualizar los disponibles
+        #ver funcion en el repo
+
+        #si es un uniqueitem directamente pasa aestar No disponible(pq esta en uso)
+        if isinstance(elemento, StockItem):
+            self.biblioteca.actDisponibles(registro_base.element_id, cantidad)
+        else:
+            self.biblioteca.actEstado(registro_base.element_id, "No disponible")
 
 
 

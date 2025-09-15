@@ -109,13 +109,13 @@ class BiblioRepo:
         #Hago un select de todas las tablas q me interesan(inventario, libros, stockItem, uniqueItem (i,l,s,u))
 
         self.cur.execute("""
-        SELECT i.*, l.*, s.*, u*
+        SELECT i.*, l.*, s.*, u.*
         FROM inventario i
         LEFT JOIN libros l ON l.inventario_id = i.element_id
         LEFT JOIN stockitem_library s on s.inventario_id = i.element_id
         LEFT JOIN uniqueitem_library u on u.inventario_id = i.element_id
         WHERE element_id = (%s)
-        """, (id_element))
+        """, (id_element,))
 
         res = self.cur.fetchone()
 
@@ -137,7 +137,7 @@ class BiblioRepo:
             ubicacion=ubicacion,
             ubicacion_interna=ubicacion_interna,
             tipo=tipo,
-            codigo_interno=res[8],
+            codigo_interno=res[7],
             ISBN=res[9],
             autor=res[10], 
             editorial=res[11],
@@ -157,7 +157,7 @@ class BiblioRepo:
             ubicacion=ubicacion,
             ubicacion_interna=ubicacion_interna,
             tipo=tipo,
-            codigo_interno=res[8],
+            codigo_interno=res[7],
 
             )
             return nUniqueI_Biblioteca
@@ -198,6 +198,63 @@ class BiblioRepo:
         SET estado = (%s)
         WHERE element_id = (%s)               
         """, (nEstado, id_element))
+
+        self.conexion.commit()
+
+    #Funcion para actualizar cantidad y disponibles
+    #Si el se trata de un objeto que no es reusable se descuenta la cantidad
+    #Si se trata de un ojeto reusable solo se descuentan los disponibles
+    def actDisponibles(self, id_element, pCantidad):
+        self.cur.execute("""
+        SELECT cantidad, disponibles, isreusable
+        FROM stockitem_library
+        WHERE inventario_id = (%s)
+        """, (id_element,))
+
+        res = self.cur.fetchone()
+        cantidad = res[0]
+        disponibles = res[1]
+        #Booleano
+        isReusable = res[2]
+
+        if(isReusable):
+
+            if(disponibles - pCantidad  >= 0 ):
+                disponibles = disponibles - pCantidad
+
+                self.cur.execute("""
+                UPDATE stockitem_library
+                SET disponibles = (%s)
+                WHERE inventario_id = (%s)
+                """, (disponibles, id_element))
+                self.conexion.commit()
+
+                if(disponibles == 0):
+                    self.actEstado(id_element, "No disponible")
+        else:
+            if(disponibles + pCantidad  >= 0):
+                disponibles = disponibles - pCantidad
+                nCantidad = cantidad - pCantidad
+
+                self.cur.execute("""
+                UPDATE stockitem_library
+                SET disponibles = (%s)
+                WHERE inventario_id = (%s)
+                """, (disponibles, id_element))
+                
+                self.cur.execute("""
+                UPDATE stockitem_library
+                SET cantidad = (%s)
+                WHERE inventario_id = (%s)
+                """, (nCantidad, id_element))
+
+                if(disponibles == 0):
+                    self.actEstado(id_element, "No disponible")
+
+                self.conexion.commit()
+
+        
+            
     
     def crearRegistro(self, registro: Registro):
         self.cur.execute("""

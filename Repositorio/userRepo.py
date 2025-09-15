@@ -29,34 +29,35 @@ class UserRepo:
         apellido = nUsuario.apellido
  
         self.cur.execute("INSERT INTO users (nombre, apellido) VALUES (%s, %s)", (nombre, apellido))
-        self.cur.commit()
+        self.conexion.commit()
 
     def crearUsuario(self, nUsuario):
         nombre = nUsuario.nombre
         apellido = nUsuario.apellido
-        self.cur.execute("""INSERT INTO user(nombre, apellido) VALUES (%s, %s), RETURNING id""", (nombre, apellido))
-        self.cur.commit()
+        self.cur.execute("""INSERT INTO users(nombre, apellido) VALUES (%s, %s) RETURNING id""", (nombre, apellido))
         
         user_id = self.cur.fetchone()[0]
-        if isinstance(User, Alumno):
+        self.conexion.commit()
+        
+        if isinstance(nUsuario, Alumno):
             curso = nUsuario.curso
             especialidad = nUsuario.especialidad
             self.cur.execute("""
             INSERT INTO alumnos(user_id, curso, especialidad)
             VALUES (%s, %s, %s)
             """, (user_id, curso, especialidad))
-            self.cur.commit()
+            self.conexion.commit()
 
-        elif isinstance(User, Profesor):
-            self.cur.execute("INSERT INTO profesores(user_id), VALUES (%s)", (user_id,))
-            self.cur.commit()
+        elif isinstance(nUsuario, Profesor):
+            self.cur.execute("INSERT INTO profesores(user_id) VALUES (%s)", (user_id,))
+            self.conexion.commit()
 
-        elif isinstance(User, Personal):
+        elif isinstance(nUsuario, Personal):
             rol = nUsuario.rol
             password = nUsuario.password
-            self.cur.execute("INSERT INTO personal(user_id, rol, password), VALUES (%s,%s)", (user_id, rol, password))
-            self.cur.commit()
-            
+            self.cur.execute("INSERT INTO personal(user_id, rol, password) VALUES (%s,%s)", (user_id, rol, password))
+            self.conexion.commit()
+        return user_id
             
             
 
@@ -65,14 +66,56 @@ class UserRepo:
 
 
     def borrar_usuario(self, id_usuario):
-        self.cur.execute("DELETE FROM users WHERE id = %s", (id_usuario,))
+        self.cur.execute("DELETE FROM users WHERE id = (%s)", (id_usuario,))
         self.conexion.commit()
 
     def buscar_usuario(self, id_usuario):
-        self.cur.execute("SELECT id, nombre, apellido FROM users WHERE id = %s", (id_usuario,))
+        self.cur.execute("SELECT id, nombre, apellido FROM users WHERE id = (%s)", (id_usuario,))
         registro = self.cur.fetchone()
         if registro:
             return User(registro[1], registro[2], registro[0])
         return None
     
+    def vincularCursoProfesor(self, nombre_del_curso, profesor_id):
+        
+        self.cur.execute("""
+        SELECT id FROM cursos
+        WHERE nombre = (%s)
+        """,(nombre_del_curso,))
+
+        cursoId = self.cur.fetchone()
+        cursoId = cursoId[0]
+
+
+        self.cur.execute("""
+        INSERT INTO profesores_cursos(profesor_id, curso_id)
+        VALUES (%s,%s)
+        """, (profesor_id, cursoId))
+
+        self.conexion.commit()
+
+    
+
+    def buscarRelacionProfesorCurso(self, nombre_del_curso, profesor_id):
+
+        self.cur.execute("""
+        SELECT id FROM cursos
+        WHERE nombre = (%s)
+        """,(nombre_del_curso,))
+
+        cursoId = self.cur.fetchone()
+        cursoId = cursoId[0]
+
+
+        self.cur.execute("""
+        SELECT * FROM profesores_cursos
+        WHERE profesor_id = (%s) 
+            AND curso_id = (%s)
+        """, (profesor_id, cursoId))
+
+        x = self.cur.fetchone()
+        if (x):
+            return True
+        else:
+            return False
 

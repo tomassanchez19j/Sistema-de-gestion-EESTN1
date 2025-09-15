@@ -1,6 +1,6 @@
 from pydantic import BaseModel
 from typing import Optional
-
+from datetime import date, time
 #Cada cosa que se preste va a saltar como registro. Si queremos ver que cosas se sacaron al mismo tiempo por una persona hacemos un join
 #Estado es para saber si ya se entregaron o no(capazbuscar otro nombre mas especifico)
 
@@ -34,9 +34,9 @@ class RegistroBase(BaseModel):
 class Registro(RegistroBase):
     registro_id: Optional[int] = None
     usuario_id: int
-    fecha: str
-    hora: str
-    expiracion: str
+    fecha: date
+    hora: time
+    expiracion: Optional[date]
     estado: str
 
 
