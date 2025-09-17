@@ -1,9 +1,13 @@
 from Conexiones.conexion import Conexion
 from Repositorio.userRepo import UserRepo
 from Repositorio.biblioRepo import BiblioRepo
-from Modelos.users import User, Alumno
+from Modelos.users import User, Alumno, Profesor, Personal
 from Modelos.registro import RegistroBase
 from Modelos.biblioteca import Libro
+from Controller.biblioController import BiblioController
+
+from fastapi import FastAPI
+
 
 from Servicio.biblioService import BiblioService
 
@@ -17,6 +21,58 @@ load_dotenv()
 var = os.getenv("DSNUSER")
 var1 = os.getenv("DSNLIBRARY")
 
+var2 = os.getenv("DSNELECTRO")
+conexion_electro = Conexion(var2)
+cursor_electro = conexion_electro.cur()
+
+#ACAAAA
+cBiblioteca = Conexion(var1)
+cUsarios = Conexion(var)
+rep_usuarios = UserRepo(cUsarios)
+
+repositorio = BiblioRepo(cBiblioteca)
+servicio = BiblioService(repositorio, rep_usuarios)
+
+app = FastAPI()
+
+controller = BiblioController(servicio)
+controller.rutas(app)
+
+
+cursor_electro.execute("""
+CREATE TABLE IF NOT EXISTS inventario(
+element_id SERIAL PRIMARY KEY,
+nombre TEXT NOT NULL,
+descripcion TEXT,
+estado TEXT NOT NULL,
+ubicacion TEXT,
+ubicacion_interna TEXT
+);
+""")
+
+
+cursor_electro.execute("""
+CREATE TABLE IF NOT EXISTS stockitem_electro(
+inventario_id INT PRIMARY KEY,
+cantidad INT NOT NULL,
+disponibles INT NOT NULL,
+isReusable BOOLEAN NOT NULL,
+FOREIGN KEY (inventario_id) REFERENCES inventario(element_id) ON DELETE CASCADE
+);
+""")
+
+cursor_electro.execute("""
+CREATE TABLE IF NOT EXISTS uniqueitem_electro(
+inventario_id INT PRIMARY KEY,
+cantidad INT NOT NULL,
+disponibles INT NOT NULL,
+isReusable BOOLEAN NOT NULL,
+FOREIGN KEY (inventario_id) REFERENCES inventario(element_id) ON DELETE CASCADE                       
+);
+""")
+
+conexion_electro.commit()
+
 
 Conexion_usuarios = Conexion(var)
 repositorio = UserRepo(Conexion_usuarios)
@@ -27,59 +83,65 @@ repositorio_biblioteca = BiblioRepo(Conexion_biblioteca)
 biblioteca_servicio = BiblioService(repositorio_biblioteca, repositorio)
 
 nUsuario = Alumno(
-                  id_usuario=26,  
-                  nombre="Juan", 
-                  apellido="Salmon", 
-                  curso="7mo 5ta", 
-                  especialidad="Programacion")
+        id_usuario=26,  
+        nombre="Juan", 
+        apellido="Salmon", 
+        curso="7mo 5ta", 
+        especialidad="Programacion")
 
-registro_base = RegistroBase(
+profesor = Profesor(
+        nombre="Deborah",
+        apellido="Cabezas"
+)
+
+
+"""registro_base = RegistroBase(
     element_id=4, 
     cantidad=1, 
     destino="7mo 5ta")
-
+"""
 #print(repositorio.crearUsuario(nUsuario))
 
-print(biblioteca_servicio.prestar(nUsuario, registro_base))
+#print(biblioteca_servicio.prestar(nUsuario, registro_base))
 
-"""nlibro = Libro(
-    nombre="El principito",
-    descripcion="Libro del principito",
+nlibro = Libro(
+    nombre="El Decameron",
+    descripcion="Libro el decameron",
     estado="Disponible",
     ubicacion="Biblioteca",
-    ubicacion_interna="Estand 8",
+    ubicacion_interna="Estand 12",
     tipo = "Libro",
-    codigo_interno = "COMP-33",
-    ISBN="233209320",
-    autor="Saint-Exupéry",
+    codigo_interno = "COMP-334",
+    ISBN="2332091221",
+    autor=" Giovanni Boccaccio",
     editorial="Losada",
-    categoria="Infantil",
-    publicacion_year=1928,
-    impresion_year=2015,
-    pais="Francia"
-)
-
-nlibro1= Libro(
-    nombre="El Gatopardo",
-    descripcion="Libro del gatopardo",
-    estado="Disponible",
-    ubicacion="Biblioteca",
-    ubicacion_interna="Estand 10",
-    tipo = "Libro",
-    codigo_interno = "COMP-21",
-    ISBN="2332122",
-    autor="Giuseppe Tomasi di Lampedusa",
-    editorial="Losada",
-    categoria="Misterio",
-    publicacion_year=1928,
-    impresion_year=2015,
+    categoria="Novela",
+    publicacion_year=1349,
+    impresion_year=1999,
     pais="Italia"
 )
 
+nlibro1= Libro(
+    nombre="Don Quijote de la Mancha",
+    descripcion="Libro del Quijote",
+    estado="Disponible",
+    ubicacion="Biblioteca",
+    ubicacion_interna="Estand 1",
+    tipo = "Libro",
+    codigo_interno = "COMP-212",
+    ISBN="234556662",
+    autor="Miguel de Cervantes",
+    editorial="Booket",
+    categoria="Novela",
+    publicacion_year=1605,
+    impresion_year=2015,
+    pais="España"
+)
 
 
-repositorio_biblioteca.crearLibro(nlibro1)
-repositorio_biblioteca.crearLibro(nlibro)
+
+#repositorio_biblioteca.crearLibro(nlibro1)
+#repositorio_biblioteca.crearLibro(nlibro)
 """
 #cursor.execute("""
 #CREATE TABLE IF NOT EXISTS inventario (
@@ -140,8 +202,9 @@ repositorio_biblioteca.crearLibro(nlibro)
 #);
 #""")
 
+
 #cursor.execute("""
-#    ALTER TABLE registros
+#    ALTER TABLE profesores_cursos
 #    ALTER COLUMN expiracion DROP NOT NULL
 #""")
 
@@ -154,8 +217,8 @@ repositorio_biblioteca.crearLibro(nlibro)
 
 
 #cursor.execute("""
-#ALTER TABLE inventario
-#ADD COLUMN tipo TEXT;
+#ALTER TABLE profesores_cursos
+#ADD COLUMN materia TEXT;
 #""")
 
 

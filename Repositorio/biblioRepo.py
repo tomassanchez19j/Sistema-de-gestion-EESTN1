@@ -43,7 +43,7 @@ class BiblioRepo:
 
     def verLibros(self):
         self.cur.execute("""
-        SELECT i.element_id, i.nombre, i.descripcion, i.estado, i.ubicacion, i.ubicacion_interna,
+        SELECT i.element_id, i.nombre, i.descripcion, i.estado, i.ubicacion, i.ubicacion_interna, i.tipo,
         l.codigo_interno, l.ISBN, l.autor, l.editorial, l.categoria, l.publicacion_year, l.impresion_year, l.pais
         FROM libros l
         JOIN inventario i ON l.inventario_id = i.element_id          
@@ -68,7 +68,7 @@ class BiblioRepo:
                     categoria=registro[11], 
                     publicacion_year=registro[12], 
                     impresion_year=registro[13], 
-                    pais=registro[13] )
+                    pais=registro[14] )
             
             libros.append(nLibro)
 

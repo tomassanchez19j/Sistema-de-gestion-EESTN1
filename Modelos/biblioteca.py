@@ -15,6 +15,14 @@ class Libro(UniqueItem):
 class Stock_biblioteca(StockItem):
     pass
 
+
 #UniqueI_biblioteca = objetos unicos como las compus, cargadores, teles
 class UniqueI_biblioteca(UniqueItem):
     pass
+
+
+
+
+
+
+

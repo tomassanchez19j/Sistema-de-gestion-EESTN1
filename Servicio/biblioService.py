@@ -1,7 +1,7 @@
 from Repositorio.biblioRepo import BiblioRepo
 from Repositorio.userRepo import UserRepo
 
-from Modelos.element import StockItem
+from Modelos.element import StockItem, Element
 from Modelos.users import User, Alumno, Profesor, Personal
 from Modelos.registro import Registro, RegistroBase
 from Modelos.biblioteca import Libro
@@ -42,9 +42,7 @@ class BiblioService:
 
 
         
-
-        
-            
+                   
     #yo debo de recibir del frontened, un usuario(alumno, profesor, etc) y un registro base
     #si el usuario viene sin id es pq no esta en la bd (hacer funcion para eso), entonces lo creo
     def prestar(self, usuario: User, registro_base: RegistroBase):
@@ -118,6 +116,11 @@ class BiblioService:
             self.biblioteca.actEstado(registro_base.element_id, "No disponible")
 
 
+    def crearLibro(self, libro: Libro):
+        self.biblioteca.crearLibro(libro)
 
+    def buscarObjeto(self, id_element):
+        return self.biblioteca.buscarElemento(id_element)
 
-                
+    def verLibros(self):
+        return (self.biblioteca.verLibros())
