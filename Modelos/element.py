@@ -10,6 +10,7 @@ class Element(BaseModel):
     estado: str
     ubicacion: str
     ubicacion_interna: str
+    
     #En tipo es conveniente poner el tipo de objeto q va a ser dependiendo de las bd y donde se este trabajando
     #Ejemplo los tipos de un objeto de biblioteca pueden ser Libro, StockItem y UniqueItem que son los que defini en mi biblioteca.py
     tipo: str

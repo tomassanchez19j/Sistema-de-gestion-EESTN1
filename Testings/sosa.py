@@ -6,6 +6,13 @@ from Modelos.registro import RegistroBase
 from Modelos.biblioteca import Libro
 from Controller.biblioController import BiblioController
 
+
+
+#Cambie todas las tablas a:
+#inventario, uniqueitems, stockitems
+#puedo hacer un repositorioGeneral, los demas heredan de el
+
+
 from fastapi import FastAPI
 
 
@@ -20,14 +27,13 @@ import os
 load_dotenv()
 var = os.getenv("DSNUSER")
 var1 = os.getenv("DSNLIBRARY")
+var2 = os.getenv("")
 
-var2 = os.getenv("DSNELECTRO")
-conexion_electro = Conexion(var2)
-cursor_electro = conexion_electro.cur()
 
 #ACAAAA
 cBiblioteca = Conexion(var1)
 cUsarios = Conexion(var)
+cElectro = Conexion(var2)
 rep_usuarios = UserRepo(cUsarios)
 
 repositorio = BiblioRepo(cBiblioteca)
@@ -39,39 +45,7 @@ controller = BiblioController(servicio)
 controller.rutas(app)
 
 
-cursor_electro.execute("""
-CREATE TABLE IF NOT EXISTS inventario(
-element_id SERIAL PRIMARY KEY,
-nombre TEXT NOT NULL,
-descripcion TEXT,
-estado TEXT NOT NULL,
-ubicacion TEXT,
-ubicacion_interna TEXT
-);
-""")
 
-
-cursor_electro.execute("""
-CREATE TABLE IF NOT EXISTS stockitem_electro(
-inventario_id INT PRIMARY KEY,
-cantidad INT NOT NULL,
-disponibles INT NOT NULL,
-isReusable BOOLEAN NOT NULL,
-FOREIGN KEY (inventario_id) REFERENCES inventario(element_id) ON DELETE CASCADE
-);
-""")
-
-cursor_electro.execute("""
-CREATE TABLE IF NOT EXISTS uniqueitem_electro(
-inventario_id INT PRIMARY KEY,
-cantidad INT NOT NULL,
-disponibles INT NOT NULL,
-isReusable BOOLEAN NOT NULL,
-FOREIGN KEY (inventario_id) REFERENCES inventario(element_id) ON DELETE CASCADE                       
-);
-""")
-
-conexion_electro.commit()
 
 
 Conexion_usuarios = Conexion(var)

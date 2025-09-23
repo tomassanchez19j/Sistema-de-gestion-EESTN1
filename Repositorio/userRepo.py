@@ -23,7 +23,7 @@ class UserRepo:
 
         return usuarios
 
-
+    #Dejo la funcion porq me sirve para crear usuarios rapidos(despues la borro)
     def crear_usuario(self, nUsuario):
         nombre = nUsuario.nombre
         apellido = nUsuario.apellido
@@ -31,6 +31,7 @@ class UserRepo:
         self.cur.execute("INSERT INTO users (nombre, apellido) VALUES (%s, %s)", (nombre, apellido))
         self.conexion.commit()
 
+    #Funcion crear usuario q vale
     def crearUsuario(self, nUsuario):
         nombre = nUsuario.nombre
         apellido = nUsuario.apellido
