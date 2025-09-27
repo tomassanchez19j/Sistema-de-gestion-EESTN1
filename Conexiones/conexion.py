@@ -20,4 +20,11 @@ class Conexion:
     def close(self):
         self.connection.close()
     
+    def rollback(self):
+        self.connection.rollback()
+
+    def close(self):
+        self.cursor.close()
+        self.connection.close()
+
         

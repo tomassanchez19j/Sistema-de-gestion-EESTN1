@@ -1,45 +1,35 @@
+from Modelos import element
+from Modelos.element import Element
+from Repositorio.repositorio import Repositorio
 from Conexiones.conexion import Conexion
 from Modelos.biblioteca import Libro, Stock_biblioteca, UniqueI_biblioteca
 from Modelos.registro import Registro
-class BiblioRepo:
+class BiblioRepo(Repositorio):
     def __init__(self, conexion: Conexion):
-        self.conexion = conexion
-        self.cur = conexion.cur()
-
-    def crearLibro(self, nLibro: Libro):
-        #me retorno el id q crea cuando lo ingreso a la tabla
-        #necesito ese id para poder crear ingresar el libro en la tabla libros pq esta como fk
-        self.cur.execute("""
-            INSERT INTO inventario (nombre, descripcion, estado, ubicacion, ubicacion_interna, tipo)
-            VALUES (%s, %s, %s, %s, %s, %s) 
-            RETURNING element_id""", (
-            nLibro.nombre,
-            nLibro.descripcion,
-            nLibro.estado,
-            nLibro.ubicacion,
-            nLibro.ubicacion_interna,
-            nLibro.tipo
-        ))
-        element_id = self.cur.fetchone()[0]
-
-        self.cur.execute("""
-            INSERT INTO libros (inventario_id, codigo_interno, ISBN, autor, editorial, categoria, publicacion_year, impresion_year, pais) 
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s);
-        """, (
-
-            element_id,
-            nLibro.codigo_interno,
-            nLibro.ISBN,
-            nLibro.autor,
-            nLibro.editorial,
-            nLibro.categoria,
-            nLibro.publicacion_year,
-            nLibro.impresion_year,
-            nLibro.pais
-
-        ))
+        super().__init__(conexion)
+        
+    def crearLibro(self, nLibro):
+       
+        element_id = super().crearElement()
+        self.cur.execute(f"""
+            INSERT INTO {"Libros"} (inventario_id, codigo_interno, ISBN, autor, editorial, categoria, 
+            publicacion_year, impresion_year, pais)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+            """, (
+                    element_id,
+                    nLibro.codigo_interno,
+                    nLibro.ISBN,
+                    nLibro.autor,
+                    nLibro.editorial,
+                    nLibro.categoria,
+                    nLibro.publicacion_year,
+                    nLibro.impresion_year,
+                    nLibro.pais
+                ))
 
         self.conexion.commit()
+        return element_id
+
 
     def verLibros(self):
         self.cur.execute("""
@@ -148,7 +138,7 @@ class BiblioRepo:
         
             return nLibro
         
-        elif(tipo =="UniqueI_biblioteca"):
+        elif(tipo =="Uniqueitem"):
             nUniqueI_Biblioteca = UniqueI_biblioteca(
             id_element=idElement,
             nombre=nombre,
@@ -162,7 +152,7 @@ class BiblioRepo:
             )
             return nUniqueI_Biblioteca
         
-        elif(tipo=="Stock_biblioteca"):
+        elif(tipo=="Stockitem"):
             nStock_biblioteca = Stock_biblioteca(
             id_element=idElement,
             nombre=nombre,
@@ -171,9 +161,9 @@ class BiblioRepo:
             ubicacion=ubicacion,
             ubicacion_interna=ubicacion_interna,
             tipo=tipo,
-            cantidad=res[8],
-            disponibles=res[9],
-            isReusable= res[10]
+            cantidad=res[7],
+            disponibles=res[8],
+            isReusable= res[9]
             )
 
             return nStock_biblioteca
@@ -207,7 +197,7 @@ class BiblioRepo:
     def actDisponibles(self, id_element, pCantidad):
         self.cur.execute("""
         SELECT cantidad, disponibles, isreusable
-        FROM stockitem_library
+        FROM stockitem
         WHERE inventario_id = (%s)
         """, (id_element,))
 
@@ -223,7 +213,7 @@ class BiblioRepo:
                 disponibles = disponibles - pCantidad
 
                 self.cur.execute("""
-                UPDATE stockitem_library
+                UPDATE stockitem
                 SET disponibles = (%s)
                 WHERE inventario_id = (%s)
                 """, (disponibles, id_element))
@@ -237,13 +227,13 @@ class BiblioRepo:
                 nCantidad = cantidad - pCantidad
 
                 self.cur.execute("""
-                UPDATE stockitem_library
+                UPDATE stockitem
                 SET disponibles = (%s)
                 WHERE inventario_id = (%s)
                 """, (disponibles, id_element))
                 
                 self.cur.execute("""
-                UPDATE stockitem_library
+                UPDATE stockitem
                 SET cantidad = (%s)
                 WHERE inventario_id = (%s)
                 """, (nCantidad, id_element))

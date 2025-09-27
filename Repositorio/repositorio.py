@@ -2,15 +2,19 @@ from Conexiones.conexion import Conexion
 from Modelos.element import Element, StockItem
 from Modelos.registro import Registro
 
+#Me sirve para los metodos que comparten todos los repositorios
+#Metodos como los selects quizas los hago aparte.
+
 #Clase general de repositorio, las demas clases reposotioro heredan del el
 #contiene los metodos q todos los repositorios tienen en genral
 #considerar el hipermorfismos de los repositorios
 #vease el caso de crearElement que puede instanciar elemento unicos o de stock pero en el caso de una bd como biblioteca
 #se necesita la instancia del objeto LIbro  si o si
+
 class Repositorio:
     def __init__(self, conexion: Conexion):
         self.conexion = conexion
-        self.cur = conexion.cursor()
+        self.cur = self.conexion.cur()
 
 
     def crearElement(self, elemento: Element):
@@ -27,7 +31,7 @@ class Repositorio:
         RETURNING element_id
         """, (nombre, descripcion, estado, ubicacion, ubicacion_interna, tipo))
 
-        #me trago el id para poder poner el objeto en su respectiva tabla
+        #Me traigo el id para poder poner el objeto en su respectiva tabla
         element_id = self.cur.fetchone()[0]
         self.conexion.commit()
 
@@ -72,10 +76,10 @@ class Repositorio:
         res = self.cur.fetchone()
         return res[0]
     
-
     #Funcion para actualizar cantidad y disponibles
     #Si el se trata de un objeto que no es reusable se descuenta la cantidad
     #Si se trata de un ojeto reusable solo se descuentan los disponibles
+
     def actDisponibles(self, id_element, pCantidad):
         self.cur.execute("""
         SELECT cantidad, disponibles, isreusable
@@ -144,6 +148,8 @@ class Repositorio:
         ))
 
         self.conexion.commit()
+
+    
 
 
 

@@ -3,15 +3,16 @@ from Repositorio.userRepo import UserRepo
 from Repositorio.biblioRepo import BiblioRepo
 from Modelos.users import User, Alumno, Profesor, Personal
 from Modelos.registro import RegistroBase
+from Modelos.element import StockItem, UniqueItem
 from Modelos.biblioteca import Libro
 from Controller.biblioController import BiblioController
-
-
 
 #Cambie todas las tablas a:
 #inventario, uniqueitems, stockitems
 #puedo hacer un repositorioGeneral, los demas heredan de el
 
+#Notas para hacer el servicio:
+#Considerar el caso de que se ingresa un nuevo elemento, el objeto que se ingresa se carga como disponible
 
 from fastapi import FastAPI
 
@@ -27,13 +28,13 @@ import os
 load_dotenv()
 var = os.getenv("DSNUSER")
 var1 = os.getenv("DSNLIBRARY")
-var2 = os.getenv("")
+
 
 
 #ACAAAA
 cBiblioteca = Conexion(var1)
 cUsarios = Conexion(var)
-cElectro = Conexion(var2)
+
 rep_usuarios = UserRepo(cUsarios)
 
 repositorio = BiblioRepo(cBiblioteca)
@@ -48,13 +49,40 @@ controller.rutas(app)
 
 
 
-Conexion_usuarios = Conexion(var)
-repositorio = UserRepo(Conexion_usuarios)
+#Conexion_usuarios = Conexion(var)
+#repositorioUsuarios = UserRepo(Conexion_usuarios)
 
-Conexion_biblioteca = Conexion(var1)
-repositorio_biblioteca = BiblioRepo(Conexion_biblioteca)
 
-biblioteca_servicio = BiblioService(repositorio_biblioteca, repositorio)
+"""
+nombre: str,
+descripcion: str,
+estado: str,
+ubicacion: str,
+ubicacion_interna: str,
+tipo: str,
+cantidad: int,
+disponibles: int,
+isReusable: bool
+
+
+"""
+
+calculadoras = StockItem("Calculadora",
+                         "Calculadoras de la biblioteca",
+                         "Disponible", 
+                         "Biblioteca", 
+                         "Caja-7", 
+                         "Uniqueitem", 
+                         20, 
+                         20, 
+                         True )
+
+#repositorio.crearElement(calculadoras)
+
+#biblioteca_servicio = BiblioService(repositorio, repositorio)
+
+
+print(f"{calculadoras.nombre}, {calculadoras.descripcion}")
 
 nUsuario = Alumno(
         id_usuario=26,  
@@ -75,7 +103,6 @@ profesor = Profesor(
     destino="7mo 5ta")
 """
 #print(repositorio.crearUsuario(nUsuario))
-
 #print(biblioteca_servicio.prestar(nUsuario, registro_base))
 
 nlibro = Libro(

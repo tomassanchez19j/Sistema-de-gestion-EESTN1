@@ -33,33 +33,37 @@ class UserRepo:
 
     #Funcion crear usuario q vale
     def crearUsuario(self, nUsuario):
-        nombre = nUsuario.nombre
-        apellido = nUsuario.apellido
-        self.cur.execute("""INSERT INTO users(nombre, apellido) VALUES (%s, %s) RETURNING id""", (nombre, apellido))
+        try:
+            nombre = nUsuario.nombre
+            apellido = nUsuario.apellido
+            self.cur.execute("""INSERT INTO users(nombre, apellido) VALUES (%s, %s) RETURNING id""", (nombre, apellido))
         
-        user_id = self.cur.fetchone()[0]
-        self.conexion.commit()
+            user_id = self.cur.fetchone()[0]
+            self.conexion.commit()
         
-        if isinstance(nUsuario, Alumno):
-            curso = nUsuario.curso
-            especialidad = nUsuario.especialidad
-            self.cur.execute("""
-            INSERT INTO alumnos(user_id, curso, especialidad)
-            VALUES (%s, %s, %s)
-            """, (user_id, curso, especialidad))
-            self.conexion.commit()
+            if isinstance(nUsuario, Alumno):
+                curso = nUsuario.curso
+                especialidad = nUsuario.especialidad
+                self.cur.execute("""
+                INSERT INTO alumnos(user_id, curso, especialidad)
+                VALUES (%s, %s, %s)
+                """, (user_id, curso, especialidad))
+                self.conexion.commit()
 
-        elif isinstance(nUsuario, Profesor):
-            self.cur.execute("INSERT INTO profesores(user_id) VALUES (%s)", (user_id,))
-            self.conexion.commit()
+            elif isinstance(nUsuario, Profesor):
+                self.cur.execute("INSERT INTO profesores(user_id) VALUES (%s)", (user_id,))
+                self.conexion.commit()
 
-        elif isinstance(nUsuario, Personal):
-            rol = nUsuario.rol
-            password = nUsuario.password
-            self.cur.execute("INSERT INTO personal(user_id, rol, password) VALUES (%s,%s)", (user_id, rol, password))
-            self.conexion.commit()
-        return user_id
+            elif isinstance(nUsuario, Personal):
+                rol = nUsuario.rol
+                password = nUsuario.password
+                self.cur.execute("INSERT INTO personal(user_id, rol, password) VALUES (%s,%s)", (user_id, rol, password))
+                self.conexion.commit()
+            return user_id
             
+        except Exception as e:
+            self.conexion.rollback()
+            raise e
             
 
             
@@ -67,8 +71,13 @@ class UserRepo:
 
 
     def borrar_usuario(self, id_usuario):
-        self.cur.execute("DELETE FROM users WHERE id = (%s)", (id_usuario,))
-        self.conexion.commit()
+        try:
+            self.cur.execute("DELETE FROM users WHERE id = (%s)", (id_usuario,))
+            self.conexion.commit()
+            self.conexion.close()
+        except Exception as e:
+            self.conexion.rollback()
+            raise e
 
     def buscar_usuario(self, id_usuario):
         self.cur.execute("SELECT id, nombre, apellido FROM users WHERE id = (%s)", (id_usuario,))
@@ -78,22 +87,27 @@ class UserRepo:
         return None
     
     def vincularCursoProfesor(self, nombre_del_curso, profesor_id):
-        
-        self.cur.execute("""
-        SELECT id FROM cursos
-        WHERE nombre = (%s)
-        """,(nombre_del_curso,))
+        try:
+            self.cur.execute("""
+            SELECT id FROM cursos
+            WHERE nombre = (%s)
+            """,(nombre_del_curso,))
 
-        cursoId = self.cur.fetchone()
-        cursoId = cursoId[0]
+            cursoId = self.cur.fetchone()
+            cursoId = cursoId[0]
 
 
-        self.cur.execute("""
-        INSERT INTO profesores_cursos(profesor_id, curso_id)
-        VALUES (%s,%s)
-        """, (profesor_id, cursoId))
+            self.cur.execute("""
+            INSERT INTO profesores_cursos(profesor_id, curso_id)
+            VALUES (%s,%s)
+            """, (profesor_id, cursoId))
 
-        self.conexion.commit()
+            self.conexion.commit()
+            self.conexion.close()
+
+        except Exception as e:
+            self.conexion.rollback()
+            raise e
 
     
 
