@@ -1,6 +1,7 @@
 from Conexiones.conexion import Conexion
 from Repositorio.userRepo import UserRepo
 from Repositorio.biblioRepo import BiblioRepo
+from Repositorio.repositorio import Repositorio
 from Modelos.users import User, Alumno, Profesor, Personal
 from Modelos.registro import RegistroBase
 from Modelos.element import StockItem, UniqueItem
@@ -24,16 +25,17 @@ from dotenv import load_dotenv
 import os
 
 #tengo que crear tabla libros, tabla registros, tabla, uniqueItem_library, stockItem_library
-
+#27/9 voy a probar los metodos de repositorio creo q ya lo termino hoy y empiezo el service
 load_dotenv()
 var = os.getenv("DSNUSER")
 var1 = os.getenv("DSNLIBRARY")
+var2 = os.getenv("DSNELECTRO")
 
 
 
-#ACAAAA
 cBiblioteca = Conexion(var1)
 cUsarios = Conexion(var)
+cProgramacion = Conexion(var2)
 
 rep_usuarios = UserRepo(cUsarios)
 
@@ -45,6 +47,9 @@ app = FastAPI()
 controller = BiblioController(servicio)
 controller.rutas(app)
 
+rep = Repositorio(cProgramacion)
+mouses = StockItem("Mouse", "Mouse RDX 600", "Disponible", "Programacion", "Stand-8", "Stockitem", 12, 12, True)
+rep.crearElement(mouses)
 
 
 

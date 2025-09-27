@@ -12,13 +12,8 @@ class Libro(UniqueItem):
     pais: str
 
 #Stock_biblioteca = calculadoras, mapas, reglas, etc
-class Stock_biblioteca(StockItem):
-    pass
-
-
 #UniqueI_biblioteca = objetos unicos como las compus, cargadores, teles
-class UniqueI_biblioteca(UniqueItem):
-    pass
+
 
 
 

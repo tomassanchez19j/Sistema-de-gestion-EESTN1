@@ -1,8 +1,8 @@
 from Modelos import element
-from Modelos.element import Element
+from Modelos.element import Element, StockItem, UniqueItem
 from Repositorio.repositorio import Repositorio
 from Conexiones.conexion import Conexion
-from Modelos.biblioteca import Libro, Stock_biblioteca, UniqueI_biblioteca
+from Modelos.biblioteca import Libro
 from Modelos.registro import Registro
 class BiblioRepo(Repositorio):
     def __init__(self, conexion: Conexion):
@@ -139,7 +139,7 @@ class BiblioRepo(Repositorio):
             return nLibro
         
         elif(tipo =="Uniqueitem"):
-            nUniqueI_Biblioteca = UniqueI_biblioteca(
+            nUniqueitem= UniqueItem(
             id_element=idElement,
             nombre=nombre,
             descripcion=descripcion,
@@ -150,10 +150,10 @@ class BiblioRepo(Repositorio):
             codigo_interno=res[7],
 
             )
-            return nUniqueI_Biblioteca
+            return nUniqueitem
         
         elif(tipo=="Stockitem"):
-            nStock_biblioteca = Stock_biblioteca(
+            nStockitem = StockItem(
             id_element=idElement,
             nombre=nombre,
             descripcion=descripcion,
@@ -166,7 +166,7 @@ class BiblioRepo(Repositorio):
             isReusable= res[9]
             )
 
-            return nStock_biblioteca
+            return nStockitem
         
 
 
