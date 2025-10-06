@@ -7,7 +7,7 @@ class UserRepo:
         self.cur = self.conexion.cur()
 
     def ver_usuarios(self):
-        self.cur.execute("SELECT id, nombre, apellido FROM users")
+        self.cur.execute("""SELECT id, nombre, apellido FROM users""")
         registros = self.cur.fetchall()
         usuarios = []
 
@@ -28,7 +28,7 @@ class UserRepo:
         nombre = nUsuario.nombre
         apellido = nUsuario.apellido
  
-        self.cur.execute("INSERT INTO users (nombre, apellido) VALUES (%s, %s)", (nombre, apellido))
+        self.cur.execute("""INSERT INTO users (nombre, apellido) VALUES (%s, %s)""", (nombre, apellido))
         self.conexion.commit()
 
     #Funcion crear usuario q vale
@@ -36,7 +36,10 @@ class UserRepo:
         try:
             nombre = nUsuario.nombre
             apellido = nUsuario.apellido
-            self.cur.execute("""INSERT INTO users(nombre, apellido) VALUES (%s, %s) RETURNING id""", (nombre, apellido))
+            self.cur.execute("""
+            INSERT INTO users(nombre, apellido) 
+            VALUES (%s, %s) 
+            RETURNING id""", (nombre, apellido))
         
             user_id = self.cur.fetchone()[0]
             self.conexion.commit()

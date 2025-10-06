@@ -26,13 +26,15 @@ from datetime import date, time
 #13/9, agrego una herencia mas a Registro
 #Entiendase que RegistroBase es lo q se recibe del frontened, es el "pedido"
 #El registro que va cargado en la bd es Registro y se completan sus atributos(fecha, hora, etc) en la capa de servicio
+
+#3/10 vuelvo a pasar registro_id al base pq no me gusta que id sea q atributo de un registro idk
 class RegistroBase(BaseModel):
+    registro_id: Optional[int] = None
     element_id: int
     cantidad: int
     destino: str
 
 class Registro(RegistroBase):
-    registro_id: Optional[int] = None
     usuario_id: int
     fecha: date
     hora: time

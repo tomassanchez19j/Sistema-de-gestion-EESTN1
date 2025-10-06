@@ -8,27 +8,39 @@ class BiblioRepo(Repositorio):
     def __init__(self, conexion: Conexion):
         super().__init__(conexion)
         
-    def crearLibro(self, nLibro):
-       
-        element_id = super().crearElement()
-        self.cur.execute(f"""
-            INSERT INTO {"Libros"} (inventario_id, codigo_interno, ISBN, autor, editorial, categoria, 
-            publicacion_year, impresion_year, pais)
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
-            """, (
-                    element_id,
-                    nLibro.codigo_interno,
-                    nLibro.ISBN,
-                    nLibro.autor,
-                    nLibro.editorial,
-                    nLibro.categoria,
-                    nLibro.publicacion_year,
-                    nLibro.impresion_year,
-                    nLibro.pais
-                ))
 
-        self.conexion.commit()
-        return element_id
+
+    #27/9   Ver si este metodo esta bien, se tendria q aplicar lo mismo desde los otros repositorios
+    # (en caso de que tengan mas objetos ademas de uItem y sItem)
+    #No lo puedo sobreescribir de otra forma
+
+    def crearElement(self, elemento):
+        try:   
+            element_id = super().crearElement(elemento)
+            if isinstance(elemento, Libro):
+                self.cur.execute(f"""
+                    INSERT INTO "libros" (inventario_id, codigo_interno, ISBN, autor, editorial, categoria, 
+                    publicacion_year, impresion_year, pais)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+                    """, (
+                            element_id,
+                            elemento.codigo_interno,
+                            elemento.ISBN,
+                            elemento.autor,
+                            elemento.editorial,
+                            elemento.categoria,
+                            elemento.publicacion_year,
+                            elemento.impresion_year,
+                            elemento.pais
+                        ))
+
+                self.conexion.commit()
+            return element_id
+        
+        except Exception as e:
+            self.conexion.rollback()
+            raise e
+        
 
 
     def verLibros(self):
@@ -64,6 +76,7 @@ class BiblioRepo(Repositorio):
 
         return libros
     
+    
     def buscarLibro(self, libro_id):
         self.cur.execute("""
         SELECT i.element_id, i.nombre, i.descripcion, i.estado, i.ubicacion, i.ubicacion_interna, i.tipo,
@@ -94,173 +107,54 @@ class BiblioRepo(Repositorio):
         return nLibro
     
     def buscarElemento(self, id_element):
-        #Necesito una funcion q me retorne el elemento q se esta solicitando
-        #Tengo q hacer un Left Join
-        #Hago un select de todas las tablas q me interesan(inventario, libros, stockItem, uniqueItem (i,l,s,u))
-
+        elemento = super().buscarElemento(id_element)
         self.cur.execute("""
-        SELECT i.*, l.*, s.*, u.*
-        FROM inventario i
-        LEFT JOIN libros l ON l.inventario_id = i.element_id
-        LEFT JOIN stockitem_library s on s.inventario_id = i.element_id
-        LEFT JOIN uniqueitem_library u on u.inventario_id = i.element_id
-        WHERE element_id = (%s)
-        """, (id_element,))
+        SELECT isbn, autor, editorial, categoria, publicacion_year, impresion_year, pais 
+        FROM libros
+        WHERE inventario_id =(%s)
+        """(id_element))
 
-        res = self.cur.fetchone()
-
-        idElement = res[0]
-        nombre = res[1]
-        descripcion = res[2]
-        estado = res[3]
-        ubicacion = res[4]
-        ubicacion_interna = res[5]
-        tipo = res[6]
-
-        if (tipo == "Libro"):
-
-            nLibro = Libro(
-            id_element=idElement,
-            nombre=nombre,
-            descripcion=descripcion,
-            estado=estado,
-            ubicacion=ubicacion,
-            ubicacion_interna=ubicacion_interna,
-            tipo=tipo,
-            codigo_interno=res[7],
-            ISBN=res[9],
-            autor=res[10], 
-            editorial=res[11],
-            categoria=res[12], 
-            publicacion_year=res[13], 
-            impresion_year=res[14], 
-            pais=res[15])
-        
-            return nLibro
-        
-        elif(tipo =="Uniqueitem"):
-            nUniqueitem= UniqueItem(
-            id_element=idElement,
-            nombre=nombre,
-            descripcion=descripcion,
-            estado=estado,
-            ubicacion=ubicacion,
-            ubicacion_interna=ubicacion_interna,
-            tipo=tipo,
-            codigo_interno=res[7],
-
+        res = self.cur.fetchall()
+        if (res):
+           nlibro = Libro(
+                id_element=id_element, 
+                    nombre=elemento.nombre, 
+                    descripcion=elemento.descripcion, 
+                    estado=elemento.estado, 
+                    ubicacion=elemento.ubicacion, 
+                    ubicacion_interna=elemento.ubicacion_interna, 
+                    codigo_interno=elemento.codigo_interno,
+                    tipo=elemento.tipo,
+                    ISBN=res[0],
+                    autor=res[1], 
+                    editorial=res[2],
+                    categoria=res[3], 
+                    publicacion_year=res[4], 
+                    impresion_year=res[5], 
+                    pais=res[6] 
             )
-            return nUniqueitem
+           
+        return nlibro
         
-        elif(tipo=="Stockitem"):
-            nStockitem = StockItem(
-            id_element=idElement,
-            nombre=nombre,
-            descripcion=descripcion,
-            estado=estado,
-            ubicacion=ubicacion,
-            ubicacion_interna=ubicacion_interna,
-            tipo=tipo,
-            cantidad=res[7],
-            disponibles=res[8],
-            isReusable= res[9]
-            )
-
-            return nStockitem
-        
-
-
-
     
-    def buscarEstado(self, id_element):
-        self.cur.execute("""
-        SELECT estado FROM inventario
-        WHERE element_id = (%s)
-        """, (id_element,))
+    def actElemento(self, id_element, campo, nvalor):
+        camposLibro = ["isbn", "autor", "editorial", "categoria", "publicacion_year", "impresion_year", "pais"]
+        try:
+            elemento = self.buscarElemento(id_element)
 
-        res = self.cur.fetchone()
-        return res[0]
-    
-    #Funcion para actualizar el estado de cualquier elemento
-    def actEstado(self, id_element, nEstado):
-        self.cur.execute("""
-        UPDATE inventario
-        SET estado = (%s)
-        WHERE element_id = (%s)               
-        """, (nEstado, id_element))
-
-        self.conexion.commit()
-
-    #Funcion para actualizar cantidad y disponibles
-    #Si el se trata de un objeto que no es reusable se descuenta la cantidad
-    #Si se trata de un ojeto reusable solo se descuentan los disponibles
-    def actDisponibles(self, id_element, pCantidad):
-        self.cur.execute("""
-        SELECT cantidad, disponibles, isreusable
-        FROM stockitem
-        WHERE inventario_id = (%s)
-        """, (id_element,))
-
-        res = self.cur.fetchone()
-        cantidad = res[0]
-        disponibles = res[1]
-        #Booleano
-        isReusable = res[2]
-
-        if(isReusable):
-
-            if(disponibles - pCantidad  >= 0 ):
-                disponibles = disponibles - pCantidad
-
-                self.cur.execute("""
-                UPDATE stockitem
-                SET disponibles = (%s)
-                WHERE inventario_id = (%s)
-                """, (disponibles, id_element))
-                self.conexion.commit()
-
-                if(disponibles == 0):
-                    self.actEstado(id_element, "No disponible")
-        else:
-            if(disponibles + pCantidad  >= 0):
-                disponibles = disponibles - pCantidad
-                nCantidad = cantidad - pCantidad
-
-                self.cur.execute("""
-                UPDATE stockitem
-                SET disponibles = (%s)
-                WHERE inventario_id = (%s)
-                """, (disponibles, id_element))
-                
-                self.cur.execute("""
-                UPDATE stockitem
-                SET cantidad = (%s)
-                WHERE inventario_id = (%s)
-                """, (nCantidad, id_element))
-
-                if(disponibles == 0):
-                    self.actEstado(id_element, "No disponible")
-
-                self.conexion.commit()
-
-        
             
-    
-    def crearRegistro(self, registro: Registro):
-        self.cur.execute("""
-        INSERT INTO registros(usuario_id, element_id, cantidad, fecha, hora, expiracion, estado, destino)
-        VALUES (%s,%s,%s,%s,%s,%s,%s, %s)""", (
-            registro.usuario_id,
-            registro.element_id,
-            registro.cantidad,
-            registro.fecha,
-            registro.hora,
-            registro.expiracion,
-            registro.estado,
-            registro.destino
+            if isinstance(elemento, Libro) and campo.lower() in camposLibro:
+                self.cur.execute(f"""
+                    UPDATE libros
+                    SET {campo} = %s
+                    WHERE inventario_id = %s
+                """, (nvalor, id_element))
+                self.conexion.commit()
+            
+            else:
+                
+                super().actElemento(id_element, campo, nvalor)
 
-        ))
-
-        self.conexion.commit()
-
-    
+        except Exception as e:
+            self.conexion.rollback()
+            raise e

@@ -8,6 +8,10 @@ from Modelos.element import StockItem, UniqueItem
 from Modelos.biblioteca import Libro
 from Controller.biblioController import BiblioController
 
+
+#30/9 ver funciones insert into(prevenir inyecciones sql)
+#Cambiar de 
+
 #Cambie todas las tablas a:
 #inventario, uniqueitems, stockitems
 #puedo hacer un repositorioGeneral, los demas heredan de el
@@ -30,66 +34,50 @@ load_dotenv()
 var = os.getenv("DSNUSER")
 var1 = os.getenv("DSNLIBRARY")
 var2 = os.getenv("DSNELECTRO")
+var3 = os.getenv("DSNPROGRAMACION")
+
 
 
 
 cBiblioteca = Conexion(var1)
 cUsarios = Conexion(var)
-cProgramacion = Conexion(var2)
+cProgramacion = Conexion(var3)
+
+
+
 
 rep_usuarios = UserRepo(cUsarios)
-
 repositorio = BiblioRepo(cBiblioteca)
 servicio = BiblioService(repositorio, rep_usuarios)
+rep = Repositorio(cProgramacion)
+
+
+
+repositorio.actElemento(3, "editorial", "Estrada")
+
 
 app = FastAPI()
 
 controller = BiblioController(servicio)
 controller.rutas(app)
 
-rep = Repositorio(cProgramacion)
-mouses = StockItem("Mouse", "Mouse RDX 600", "Disponible", "Programacion", "Stand-8", "Stockitem", 12, 12, True)
+
+
+
+"""rep = Repositorio(cProgramacion)
+mouses = StockItem(nombre="Mouse",
+                   descripcion="Mouse RDX 600",
+                    estado="Disponible", 
+                    ubicacion="Programacion", 
+                    ubicacion_interna="Stand-8",
+                    tipo="Stockitem", 
+                    cantidad=12, 
+                    disponibles=12,
+                    isReusable= True)
 rep.crearElement(mouses)
-
-
-
-
-#Conexion_usuarios = Conexion(var)
-#repositorioUsuarios = UserRepo(Conexion_usuarios)
-
-
-"""
-nombre: str,
-descripcion: str,
-estado: str,
-ubicacion: str,
-ubicacion_interna: str,
-tipo: str,
-cantidad: int,
-disponibles: int,
-isReusable: bool
-
-
 """
 
-calculadoras = StockItem("Calculadora",
-                         "Calculadoras de la biblioteca",
-                         "Disponible", 
-                         "Biblioteca", 
-                         "Caja-7", 
-                         "Uniqueitem", 
-                         20, 
-                         20, 
-                         True )
-
-#repositorio.crearElement(calculadoras)
-
-#biblioteca_servicio = BiblioService(repositorio, repositorio)
-
-
-print(f"{calculadoras.nombre}, {calculadoras.descripcion}")
-
-nUsuario = Alumno(
+"""nUsuario = Alumno(
         id_usuario=26,  
         nombre="Juan", 
         apellido="Salmon", 
@@ -99,7 +87,7 @@ nUsuario = Alumno(
 profesor = Profesor(
         nombre="Deborah",
         apellido="Cabezas"
-)
+)"""
 
 
 """registro_base = RegistroBase(
@@ -145,46 +133,30 @@ nlibro1= Libro(
 )
 
 
+# ---------- Aca dejo como cree las tablas(me sirve por si debo hacer otras) ------------
 
-#repositorio_biblioteca.crearLibro(nlibro1)
-#repositorio_biblioteca.crearLibro(nlibro)
-"""
-#cursor.execute("""
+#cProgramacion.cursor.execute("""
 #CREATE TABLE IF NOT EXISTS inventario (
-#    element_id SERIAL PRIMARY KEY,
-#    nombre TEXT NOT NULL,
-#    descripcion TEXT,
-#   estado TEXT NOT NULL,
-#    ubicacion TEXT,
-#    ubicacion_interna TEXT
-#);
-#""")
+#element_id SERIAL PRIMARY KEY,
+#nombre TEXT NOT NULL,
+#descripcion TEXT,
+#estado TEXT NOT NULL,
+#ubicacion TEXT,
+#ubicacion_interna TEXT,
+#tipo TEXT
+#);""")
 
-#cursor.execute("""
-#CREATE TABLE IF NOT EXISTS libros (
-#    codigo_interno TEXT PRIMARY KEY,
-#    inventario_id INT NOT NULL,
-#    ISBN TEXT NOT NULL,
-#    autor TEXT,
-#    editorial TEXT NOT NULL,
-#    categoria TEXT,
-#    publicacion_year INT NOT NULL,
-#    impresion_year INT NOT NULL,
-#    pais TEXT NOT NULL,
-#    FOREIGN KEY (inventario_id) REFERENCES inventario(element_id) ON DELETE CASCADE
-#);
-#""")
 
-#cursor.execute("""
-#CREATE TABLE IF NOT EXISTS uniqueItem_library (
+#cProgramacion.cursor.execute("""
+#CREATE TABLE IF NOT EXISTS uniqueitems (
 #    codigo_interno TEXT PRIMARY KEY,
 #    inventario_id INT NOT NULL,
 #    FOREIGN KEY (inventario_id) REFERENCES inventario(element_id) ON DELETE CASCADE
 #);
 #""")
 
-#cursor.execute("""
-#CREATE TABLE IF NOT EXISTS stockItem_library (
+#cProgramacion.cursor.execute("""
+#CREATE TABLE IF NOT EXISTS stockitems (
 #    inventario_id INT PRIMARY KEY,
 #    cantidad INT NOT NULL,
 #    disponibles INT NOT NULL,
@@ -193,7 +165,7 @@ nlibro1= Libro(
 #);
 #""")
 
-#cursor.execute("""
+#cElectro.cursor.execute("""
 #CREATE TABLE IF NOT EXISTS registros (
 #    registro_id SERIAL PRIMARY KEY,
 #    usuario_id INT NOT NULL,
@@ -207,6 +179,8 @@ nlibro1= Libro(
 #    FOREIGN KEY (element_id) REFERENCES inventario(element_id) ON DELETE CASCADE
 #);
 #""")
+#cElectro.commit()
+#cProgramacion.commit()
 
 
 #cursor.execute("""
@@ -214,7 +188,6 @@ nlibro1= Libro(
 #    ALTER COLUMN expiracion DROP NOT NULL
 #""")
 
-#Conexion_biblioteca.commit()
 
 #cursor.execute("""
 #DELETE FROM inventario
@@ -250,23 +223,12 @@ for inicio, fin in turnos:
         print(f"No es en este turno")"""
 
 
-#Conexion_biblioteca.commit()
-
-
 
 """
 libros = repositorio_biblioteca.verLibros()
 for libro in libros:
     print(f"Id:{libro.id_element} Titulo: {libro.nombre}, Autor: {libro.autor}, Pais: {libro.pais}")
 
-libro = repositorio_biblioteca.buscarLibro(2)
-estado = repositorio_biblioteca.buscarEstado(2)
-
-print(f"JSAKKKKKKKKKKK {estado}")
-print(f"jUASJUASJUAS Id:{libro.id_element} Titulo: {libro.nombre}, Autor: {libro.autor}, Pais: {libro.pais}")"""
-
-
-"""usuarios = repositorio.ver_usuarios()
 
 
 for user in usuarios:

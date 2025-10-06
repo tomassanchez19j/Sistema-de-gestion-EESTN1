@@ -2,7 +2,7 @@ from Repositorio.repositorio import Repositorio
 from Repositorio.userRepo import UserRepo
 from datetime import datetime, time, timedelta
 from Modelos.biblioteca import Libro
-from Modelos.element import StockItem
+from Modelos.element import Element, StockItem, UniqueItem
 from Modelos.registro import Registro, RegistroBase
 from Modelos.users import User, Profesor
 
@@ -97,3 +97,25 @@ class Servicio:
             self.repositorio.actDisponibles(registro_base.element_id, cantidad)
         else:
             self.repositorio.actEstado(registro_base.element_id, "No disponible")
+
+
+
+    #Pensar en cmo extender esto
+    #-se me ocurre verificar cosas como el horario en que se entrega(que sea el correcto)
+    #- sera importante ver la hora de devolucion? 
+    def devolver(self, registro_id):
+        self.repositorio.devolver(registro_id)
+        
+    def crearElement(self, elemento: Element):
+        self.repositorio.crearElement(elemento)
+
+    def buscarElemento(self, id_element):
+        self.repositorio.buscarElemento(id_element)
+
+    def borrarElemento(self, id_element):
+        self.repositorio.borrarElemento(self, id_element)
+
+    def verInventarioAll(self):
+        self.repositorio.verInventarioAll()
+    
+    
