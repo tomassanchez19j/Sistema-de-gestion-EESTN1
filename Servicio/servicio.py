@@ -1,3 +1,4 @@
+from typing import Any
 from Repositorio.repositorio import Repositorio
 from Repositorio.userRepo import UserRepo
 from datetime import datetime, time, timedelta
@@ -6,14 +7,25 @@ from Modelos.element import Element, StockItem, UniqueItem
 from Modelos.registro import Registro, RegistroBase
 from Modelos.users import User, Profesor
 
+
 class Servicio:
     def __init__(self, repositorio: Repositorio, usuarios: UserRepo):
         self.repositorio = repositorio
         self.usuarios = usuarios
-
+    
+    #Diccionario que retorna cada funcion del servicio segun el try-except
+    #Estado(True-False), Mensaje(que es lo que se hizo), Data(devolver algo q me sirva al momento(id_element, etc))
+    def res(estado: bool, mensaje: str, data: Any):
+        return {
+            "success": estado,
+            "message": mensaje,
+            "data": data
+        }
+    
+    
 
     #considerar si esta funcion basta para la expiracion
-    #ejemplo: 
+    #lo q hace esta funcion es ver en q turno se encuentra el pedido y calcula su expiracion
     def calcularExpiracion(self, ahora):
         hora = ahora.time()
         fecha = ahora.date()
@@ -107,13 +119,34 @@ class Servicio:
         self.repositorio.devolver(registro_id)
         
     def crearElement(self, elemento: Element):
-        self.repositorio.crearElement(elemento)
+        try:
+            id_element = self.repositorio.crearElement(elemento)
+            return self.res(True, "Registro creado exitosamente", id_element)
+        except Exception as e:
+            return self.res(False, f"Error al crear el elemento: {str(e)}", None)
 
     def buscarElemento(self, id_element):
-        self.repositorio.buscarElemento(id_element)
+        try:
+            elemento = self.repositorio.buscarElemento(id_element)
+            return self.res(True, f"Objeto con id {id_element} encontrado", elemento)
+        except Exception as e:
+            return self.res(False, f"Error al buscar el elemento: {str(e)}", None)
 
     def borrarElemento(self, id_element):
-        self.repositorio.borrarElemento(self, id_element)
+        try:
+            if(self.repositorio.borrarElemento(self, id_element)):
+                return self.res(True, f"Elemento borrado exitosamente", None)
+            else:
+                return self.res(False, f"Elemento con id {id_element}", None)
+        except Exception as e:
+            return self.res(False, f"Error al buscar el elemento: {str(e)}", None)
+    
+    def actDisponibles(self, id_element, pCantidad):
+        try:
+            self.repositorio.actDisponibles(id_element, pCantidad)
+            return self.res(True, f"Se ha actualizado la cantidad del objeto  con id {id_element}", None)
+        except Exception as e:
+            return self.res(False, f"Error al actualizar cantidad: {str(e)}", None)
 
     def verInventarioAll(self):
         self.repositorio.verInventarioAll()

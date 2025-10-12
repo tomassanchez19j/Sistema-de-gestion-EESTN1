@@ -1,0 +1,156 @@
+cBase.cursor.execute("""
+CREATE TABLE IF NOT EXISTS biblioteca.inventario (
+element_id SERIAL PRIMARY KEY,
+nombre TEXT NOT NULL,
+descripcion TEXT,
+estado TEXT NOT NULL,
+ubicacion TEXT,
+ubicacion_interna TEXT,
+tipo TEXT
+);
+""")
+
+cBase.cursor.execute("""
+CREATE TABLE IF NOT EXISTS biblioteca.uniqueitems (
+    codigo_interno TEXT PRIMARY KEY,
+    inventario_id INT NOT NULL,
+    FOREIGN KEY (inventario_id) REFERENCES biblioteca.inventario(element_id) ON DELETE CASCADE
+);
+""")
+
+cBase.cursor.execute("""
+CREATE TABLE IF NOT EXISTS biblioteca.stockitems (
+    inventario_id INT PRIMARY KEY,
+    cantidad INT NOT NULL,
+    disponibles INT NOT NULL,
+    isReusable BOOLEAN NOT NULL,
+    FOREIGN KEY (inventario_id) REFERENCES biblioteca.inventario(element_id) ON DELETE CASCADE
+);
+""")
+
+cBase.cursor.execute("""
+CREATE TABLE IF NOT EXISTS biblioteca.libros(
+inventario_id INT NOT NULL,
+codigo_interno TEXT NOT NULL,
+ISBN TEXT NOT NULL,
+autor TEXT,
+editorial TEXT,
+categoria TEXT,
+publicacion_year TEXT,
+impresion_year TEXT,
+pais TEXT,
+FOREIGN KEY (inventario_id) REFERENCES biblioteca.inventario(element_id) ON DELETE CASCADE,
+FOREIGN KEY (codigo_interno) REFERENCES biblioteca.uniqueitems(codigo_interno) ON DELETE CASCADE         
+);
+""")
+
+cBase.cursor.execute("""
+CREATE TABLE IF NOT EXISTS biblioteca.registros (
+registro_id SERIAL PRIMARY KEY,
+usuario_id INT NOT NULL,
+element_id INT NOT NULL,
+cantidad INT NOT NULL,
+fecha DATE NOT NULL,
+hora TIME(0) NOT NULL,
+expiracion TIMESTAMP(0) NOT NULL,
+estado TEXT NOT NULL,
+destino TEXT NOT NULL,
+FOREIGN KEY (element_id) REFERENCES biblioteca.inventario(element_id) ON DELETE CASCADE
+);
+""")
+
+cBase.cursor.execute("""
+CREATE TABLE IF NOT EXISTS programacion.inventario (
+element_id SERIAL PRIMARY KEY,
+nombre TEXT NOT NULL,
+descripcion TEXT,
+estado TEXT NOT NULL,
+ubicacion TEXT,
+ubicacion_interna TEXT,
+tipo TEXT
+);
+""")
+
+cBase.cursor.execute("""
+CREATE TABLE IF NOT EXISTS programacion.uniqueitems (
+    codigo_interno TEXT PRIMARY KEY,
+    inventario_id INT NOT NULL,
+    FOREIGN KEY (inventario_id) REFERENCES programacion.inventario(element_id) ON DELETE CASCADE
+);
+""")
+
+cBase.cursor.execute("""
+CREATE TABLE IF NOT EXISTS programacion.stockitems (
+    inventario_id INT PRIMARY KEY,
+    cantidad INT NOT NULL,
+    disponibles INT NOT NULL,
+    isReusable BOOLEAN NOT NULL,
+    FOREIGN KEY (inventario_id) REFERENCES programacion.inventario(element_id) ON DELETE CASCADE
+);
+""")
+
+cBase.cursor.execute("""
+CREATE TABLE IF NOT EXISTS programacion.registros (
+registro_id SERIAL PRIMARY KEY,
+usuario_id INT NOT NULL,
+element_id INT NOT NULL,
+cantidad INT NOT NULL,
+fecha DATE NOT NULL,
+hora TIME(0) NOT NULL,
+expiracion TIMESTAMP(0) NOT NULL,
+estado TEXT NOT NULL,
+destino TEXT NOT NULL,
+FOREIGN KEY (element_id) REFERENCES programacion.inventario(element_id) ON DELETE CASCADE
+);
+""")
+
+cBase.cursor.execute("""
+CREATE TABLE IF NOT EXISTS usuarios.usuarios(
+id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+nombre TEXT NOT NULL,
+apellido TEXT NOT NULL                    
+);
+""")
+
+cBase.cursor.execute("""
+CREATE TABLE IF NOT EXISTS usuarios.cursos(
+curso_id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+año INT NOT NULL,
+division INT NOT NULL,
+especialidad TEXT
+);
+""")
+
+cBase.cursor.execute("""
+CREATE TABLE IF NOT EXISTS usuarios.profesores(
+user_id INT NOT NULL,
+FOREIGN KEY (user_id) REFERENCES usuarios.usuarios(id) ON DELETE CASCADE
+);
+""")
+
+cBase.cursor.execute("""
+CREATE TABLE IF NOT EXISTS usuarios.alumnos(
+user_id INT NOT NULL,
+curso TEXT NOT NULL,
+especialidad TEXT NOT NULL,
+FOREIGN KEY (user_id) REFERENCES usuarios.usuarios(id) ON DELETE CASCADE
+);
+""")
+
+cBase.cursor.execute("""
+CREATE TABLE IF NOT EXISTS usuarios.personal(
+user_id INT NOT NULL,
+rol TEXT NOT NULL,
+password TEXT NOT NULL,
+FOREIGN KEY (user_id) REFERENCES usuarios.usuarios(id) ON DELETE CASCADE
+);
+""")
+
+cBase.cursor.execute("""
+CREATE TABLE IF NOT EXISTS usuarios.profesores_cursos(
+profesor_id INT NOT NULL,
+curso_id INT NOT NULL,
+FOREIGN KEY (profesor_id) REFERENCES usuarios.usuarios(id) ON DELETE CASCADE,
+FOREIGN KEY (curso_id) REFERENCES usuarios.cursos(curso_id) ON DELETE CASCADE
+)
+""")
