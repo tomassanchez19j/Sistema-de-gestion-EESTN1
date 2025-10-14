@@ -35,6 +35,11 @@ load_dotenv()
 var= os.getenv("DATABASE_URL")
 conexion=Conexion(var)
 
+#Ejecutar esto cuando llegue a casa
+conexion.cursor.execute("ALTER TABLE usuarios.personal ADD COLUMN email TEXT NOT NULL")
+conexion.commit()
+conexion.close()
+
 
 """mouses = StockItem(nombre="Mouse",
                    descripcion="Mouse RDX 600",
@@ -86,6 +91,7 @@ nlibro1= Libro(
 
 repositorio = Repositorio("biblioteca", conexion)
 rep_usuarios = UserRepo("usuarios", conexion)
+
 
 
 

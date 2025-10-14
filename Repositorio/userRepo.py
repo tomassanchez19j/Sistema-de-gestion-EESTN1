@@ -61,11 +61,9 @@ class UserRepo:
                 self.conexion.commit()
 
             elif isinstance(nUsuario, Personal):
-                rol = nUsuario.rol
-                password = nUsuario.password
                 self.cur.execute(f"""
-                INSERT INTO {self.esquema}.personal(user_id, rol, password)
-                VALUES (%s,%s,%s)""", (user_id, rol, password))
+                INSERT INTO {self.esquema}.personal(user_id, rol, password, email)
+                VALUES (%s,%s,%s)""", (user_id, nUsuario.rol, nUsuario.password, nUsuario.email))
                 self.conexion.commit()
             return user_id
             
@@ -83,18 +81,29 @@ class UserRepo:
             self.conexion.rollback()
             raise e
 
+
+    #Pensar que me deberia traer de usuario
     def buscar_usuario(self, id_usuario):
         self.cur.execute(f"""
         SELECT id, nombre, apellido 
         FROM {self.esquema}.usuarios WHERE id = (%s)""", (id_usuario,))
         registro = self.cur.fetchone()
-        if registro:
+        if( registro):
             return User(registro[1], registro[2], registro[0])
+        return None
+    
+    def usuario_email(self, email):
+        self.cur.execute(f"""
+        SELECT password
+        FROM {self.esquema}.personal WHERE email = (%s)""", (email,))
+
+        registro = self.cur.fetchone()
+        if (registro):
+            return registro[0]
         return None
     
     def vincularCursoProfesor(self, curso_id, profesor_id, materia):
         try:
-
             self.cur.execute("""
             INSERT INTO profesores_cursos(profesor_id, curso_id, materia)
             VALUES (%s,%s, %s)
@@ -116,16 +125,15 @@ class UserRepo:
     #-Alumno a personal
     #-Profesor a personal
     #Pq necesitan necesaramente una contrasña de acceso
-    def crearJerarquia(self, id_user, rol, npassword):
+    def crearJerarquia(self, id_user, rol, npassword, email):
         #Roles: Directivo, pasante, administrador, bibliotecario
         #Pasante: pañolero/pañolera
-
         try: 
             usuario = self.buscar_usuario(id_user)
             self.cur.execute(f"""
-            INSERT INTO {self.esquema}.personal(user_id, rol, password)
+            INSERT INTO {self.esquema}.personal(user_id, rol, password, email)
             VALUES (%s,%s,%s)
-            """, (usuario.id_usuario, rol, npassword))
+            """, (usuario.id_usuario, rol, npassword, email))
 
             self.conexion.commit()
 

@@ -16,3 +16,4 @@ class Profesor(User):
 class Personal(User):
     rol: str
     password: str
+    email: str
