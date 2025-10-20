@@ -3,11 +3,13 @@ from Conexiones.conexion import Conexion
 from Modelos.users import User, Alumno, Profesor, Personal
 from Repositorio.userRepo  import UserRepo
 from Servicio.pwdManager import PasswordManager
+from Servicio.tokenManager import TokenManager
 class Userservice:
-    def __init__(self, conexion: Conexion, repo: UserRepo, pm: PasswordManager):
+    def __init__(self, conexion: Conexion, repo: UserRepo, pm: PasswordManager, tm: TokenManager):
         self.conexion = conexion
         self.repo = repo
         self.pm = pm
+        self.tm = tm
 
     def res(estado: bool, mensaje: str, data: Any):
         return {
@@ -20,15 +22,28 @@ class Userservice:
     #Atento aca, validar intentos de ingreso de sesion
     #Crear Tokens Managers
     def login(self, email, password):
-        cont = self.repo.usuario_email(email)
-        if(cont):
-            if(self.pm.verify_pwd(password, cont)):
-                #Aca deberia mandar el token validado
-                return True
-            else:
-                return  self.res(False, f"Email ocontraseña incorrctos", False)
+        try:
+            usuario = self.repo.usuario_email(email)
+            if not usuario:
+                return self.res(False, "Email o contraseña incorrectos", None)
+            
+            if not self.pm.verify_pwd(password, usuario.password):
+                return self.res(False, "Email o contraseña incorrectos", None)
+            
+            token_response= self.tm.tokenResponse(usuario.id_usuario, usuario.email)
+            return self.res(True, "Acceso", token_response.model_dump())
+        except Exception as e:
+            raise e
+    
+    #token str no Objeto Token
+    def validarUsuario(self, token:str):
+        res = self.tm.validarToken(token)
+
+        if res:
+            return self.res(True, "Validado", res)
+
         else:
-            return self.res(False, f"Email o contraseña incorretos", None)       
+            return self.res(res.succes, f"{res.message}", None)
 
     def crearUsuario(self, usuario: User):
         try:

@@ -1,5 +1,6 @@
 import bcrypt
 
+
 class PasswordManager:
     def __init__(self):
         self.rounds = 12
@@ -11,3 +12,4 @@ class PasswordManager:
     def verify_pwd(self, password, hashed):
         return bcrypt.checkpw(password.encode(), hashed.encode())
 
+    

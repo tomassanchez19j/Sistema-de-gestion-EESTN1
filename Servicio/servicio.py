@@ -7,7 +7,6 @@ from Modelos.element import Element, StockItem, UniqueItem
 from Modelos.registro import Registro, RegistroBase
 from Modelos.users import User, Profesor
 
-
 class Servicio:
     def __init__(self, repositorio: Repositorio, usuarios: UserRepo):
         self.repositorio = repositorio
@@ -22,8 +21,6 @@ class Servicio:
             "data": data
         }
     
-    
-
     #considerar si esta funcion basta para la expiracion
     #lo q hace esta funcion es ver en q turno se encuentra el pedido y calcula su expiracion
     def calcularExpiracion(self, ahora):
@@ -41,74 +38,64 @@ class Servicio:
             
     
     def prestar(self, usuario: User, registro_base: RegistroBase):
-
-        #esto me tiene que devolver Disponible, No disponible
-        estado = self.repositorio.buscarEstado(registro_base.element_id)
-
-        #pensar q retornar aca
-        if (estado != "Disponible"):
-            return {"No esta disponible"}
-
-        
-        if (usuario.id_usuario == None):
-            usuario.id_usuario = self.usuarios.crearUsuario(usuario)
-            print(f"Usuario creado", usuario.id_usuario) 
+        try:
+            #esto me tiene que devolver Disponible, No disponible
+            estado = self.repositorio.buscarEstado(registro_base.element_id)
+            #pensar q retornar aca
+            if (estado != "Disponible"):
+                return self.res(False, "El elemento no esta disponible", None)
             
-        #acordarme de hacerle un alter table a la tabla esta de relacion para agreegarle la columna materia
-        if isinstance(usuario, Profesor):
-            if not (self.usuarios.buscarRelacionProfesorCurso(registro_base.destino, usuario.id_usuario)):
-                self.usuarios.vincularCursoProfesor(registro_base.destino ,usuario.id_usuario)
+            if (usuario.id_usuario == None):
+                usuario.id_usuario = self.usuarios.crearUsuario(usuario)         
+            #acordarme de hacerle un alter table a la tabla esta de relacion para agreegarle la columna materia
+            if isinstance(usuario, Profesor):
+                if not (self.usuarios.buscarRelacionProfesorCurso(registro_base.destino, usuario.id_usuario)):
+                    self.usuarios.vincularCursoProfesor(registro_base.destino ,usuario.id_usuario)
 
-
-
-
-        elemento = self.repositorio.buscarElemento(registro_base.element_id)
-        cantidad = registro_base.cantidad
-        ahora = datetime.now()
-        fecha = ahora.date()
-        hora = ahora.time()
-        
-
-        #si es un libro la expiracion se realiza de +7 dias(es ejemplificativo)
-        if isinstance(elemento, Libro):
-            expiracion = fecha + timedelta(days=7)
-        else:
+            elemento = self.repositorio.buscarElemento(registro_base.element_id)
+            cantidad = registro_base.cantidad
+            ahora = datetime.now()
+            fecha = ahora.date()
+            hora = ahora.time()
+            
             expiracion = self.calcularExpiracion(ahora)
+            #si es un stock y es reusable el estado es En curso
+            #pero si es un elemento q no es reusable(osea q es descartable), nunca voy a tener q esperar a que se devuelva
+            #directamente lo marco como consumido
+            #lo mismo aplica para su expiracion, es un registro q nace "expirado" pq nunca se debe devolver
+            if isinstance(elemento, StockItem) and elemento.isReusable:
+                estado = "En curso"
+            
+            elif isinstance(elemento, StockItem):
+                estado = "Consumido"
+                expiracion = None
+            else:
+                estado = "En curso"
 
-        #si es un stock y es reusable el estado es En curso
-        #pero si es un elemento q no es reusable(osea q es descartable), nunca voy a tener q esperar a que se devuelva
-        #directamente lo marco como consumido
-        #lo mismo aplica para su expiracion, es un registro q nace "expirado" pq nunca se debe devolver
-        if isinstance(elemento, StockItem) and elemento.isReusable:
-            estado = "En curso"
-        
-        elif isinstance(elemento, StockItem):
-            estado = "Consumido"
-            expiracion = None
-        else:
-            estado = "En curso"
+            nRegistro = Registro(
+                element_id=registro_base.element_id,
+                cantidad=cantidad,
+                destino=registro_base.destino,
+                usuario_id=usuario.id_usuario,
+                fecha=fecha,
+                hora=hora,
+                expiracion=expiracion,
+                estado=estado
+            )
 
-        nRegistro = Registro(
-            element_id=registro_base.element_id,
-            cantidad=cantidad,
-            destino=registro_base.destino,
-            usuario_id=usuario.id_usuario,
-            fecha=fecha,
-            hora=hora,
-            expiracion=expiracion,
-            estado=estado
-        )
+            self.repositorio.crearRegistro(nRegistro)
 
-        self.repositorio.crearRegistro(nRegistro)
+            #Si es un stockitem le tengo q restar las cantidades q estan en uso, y actualizar los disponibles
+            #ver funcion en el repo
 
-        #Si es un stockitem le tengo q restar las cantidades q estan en uso, y actualizar los disponibles
-        #ver funcion en el repo
-
-        #si es un uniqueitem directamente pasa aestar No disponible(pq esta en uso)
-        if isinstance(elemento, StockItem):
-            self.repositorio.actDisponibles(registro_base.element_id, cantidad)
-        else:
-            self.repositorio.actEstado(registro_base.element_id, "No disponible")
+            #si es un uniqueitem directamente pasa aestar No disponible(pq esta en uso)
+            if isinstance(elemento, StockItem):
+                self.repositorio.actDisponibles(registro_base.element_id, cantidad)
+            else:
+                self.repositorio.actEstado(registro_base.element_id, "No disponible")
+            return self.res(True, "Registro creado", None)
+        except Exception as e:
+            return self.res(False, f"Error al crear registro: {str(e)}")
 
 
 
@@ -149,6 +136,7 @@ class Servicio:
             return self.res(False, f"Error al actualizar cantidad: {str(e)}", None)
 
     def verInventarioAll(self):
-        self.repositorio.verInventarioAll()
+        res = self.repositorio.verInventarioAll()
+        return res
     
     
