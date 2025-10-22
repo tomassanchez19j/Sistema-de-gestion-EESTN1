@@ -1,3 +1,4 @@
+from typing import List
 from Conexiones.conexion import Conexion
 from Modelos.users import User, Alumno, Profesor, Personal
 
@@ -9,28 +10,111 @@ class UserRepo:
 
 
     #Revisar este metodo y que devuevla un array de usuarios pero cada uno con su respectiva clase
-    def ver_usuarios(self):
-        self.cur.execute(f"""SELECT u.id, u.nombre, u.apellido, a.curso, a.especialidad, p.rol, p.password
-                            FROM {self.esquema}.usuarios as u
-                            INNER JOIN {self.esquema}.alumnos AS a ON a.user_id = u.id
-                            INNER JOIN {self.esquema}.personal AS p ON p.user_id = u.id""")
+    def verAlumnos(self):
+        self.cur.execute(f"""
+                         SELECT u.id, u.nombre, u.apellido, a.curso, a.especialidad
+                         FROM {self.esquema}.usuarios u
+                         INNER JOIN {self.esquema}.alumnos a ON u.id = a.user_id
+                         """)
         
-        registros = self.cur.fetchall()
-        usuarios = []
+        res = self.cur.fetchall()
+        alumnos = []
+        for r in res:
+            alumno=Alumno(id_usuario=r[0], 
+                          nombre=r[1], 
+                          apellido=r[2], 
+                          curso=r[3], 
+                          especialidad=r[4])
+            alumnos.append(alumno)
 
-        for registro in registros:
-            nUsuario = User(
+        return alumnos
+    
+    def buscarRelacionArea(self, ids_areas: List[str]):
+        areas = []
+        for id in ids_areas:
+            self.cur.execute(f"""
+            SELECT area FROM {self.esquema}.areas
+            WHERE area_id = (%s)
+            """, (id,))
 
-                nombre=registro[1],
-                apellido=registro[2],
-                id_usuario=registro[0]
-                
+            res = self.cur.fetchone()
+            areas.append(res[0])
+        return areas
+
+    
+    def verPersonal(self):
+        self.cur.execute(f"""
+        SELECT u.id, u.nombre, u.apellido, p.rol, p.email
+        FROM {self.esquema}.usuarios u
+        INNER JOIN {self.esquema}.personal p ON u.id = p.user_id
+        """)
+
+        res = self.cur.fetchall()
+        personal = []
+        for r in res:
+            self.cur.execute(f"""
+            SELECT area_id FROM {self.esquema}.usuario_area_relacion
+            WHERE user_id= (%s)""",(r[0],))
+            
+            resp = self.cur.fetchall()
+            ids_areas = []
+            for id in resp:
+                ids_areas.append(id[0])
+            
+            areas = self.buscarRelacionArea(ids_areas)
+
+            npersonal= Personal(
+                id_usuario=r[0],
+                nombre=r[1],
+                apellido=r[2],
+                rol=r[3],
+                email=r[4],
+                zonas_acceso=areas
             )
-            usuarios.append(nUsuario)
 
-        return usuarios
+            personal.append(npersonal)
+
+        return personal
+
+    #Nota: aca lo iideal tambien seria devolver los cursos del profesor, para eso se debe cambiar el modelo de profesore
+    #agregarles el atributo cursos como lista y demas. Ahora por paja y por tiempo lo dejo solo asi        
+    def verProfesores(self):
+        self.cur.execute(f"""
+        SELECT u.id, u.nombre, u.apellido
+        FROM {self.esquema}. usuarios u
+        INNER JOIN {self.esquema}.profesores p ON u.id = p.user_id
+        """)
+        profesores = []
+        res= self.cur.fetchall()
+        for r in res:
+            profesor = Profesor(id_usuario=r[0], nombre=r[1], apellido=r[2])
+            profesores.append(profesor)
+        return profesores
+
     
+    def areas(self):
+        self.cur.execute(f"""SELECT area_id, area FROM {self.esquema}.areas""")
+        res = []
+
+        for f in self.cur.fetchall():
+            res.append({
+                "area_id":f[0],
+                "area":f[1]}
+            )
+
+        return res
     
+    def bsarea_id(self, area_nombre):
+        self.cur.execute(f"""
+        SELECT area_id FROM {self.esquema}.areas
+        WHERE area = (%s)
+        """, (area_nombre,))
+
+        res = self.cur.fetchone()
+        if res is None:
+            return None
+        return res[0]
+
 
     #Funcion crear usuario q vale
     def crearUsuario(self, nUsuario):
@@ -63,7 +147,15 @@ class UserRepo:
             elif isinstance(nUsuario, Personal):
                 self.cur.execute(f"""
                 INSERT INTO {self.esquema}.personal(user_id, rol, password, email)
-                VALUES (%s,%s,%s)""", (user_id, nUsuario.rol, nUsuario.password, nUsuario.email))
+                VALUES (%s,%s,%s,%s)""", (user_id, nUsuario.rol, nUsuario.password, nUsuario.email))
+
+                for zona in nUsuario.zonas_acceso:
+                    r = self.bsarea_id(zona)
+                    if (r != None):
+                        self.cur.execute(f"""
+                        INSERT INTO {self.esquema}.usuario_area_relacion(user_id, area_id)
+                        VALUES (%s,%s)
+                        """, (user_id, r))
                 self.conexion.commit()
             return user_id
             
@@ -82,25 +174,28 @@ class UserRepo:
             raise e
 
 
-    #Pensar que me deberia traer de usuario
-    def buscar_usuario(self, id_usuario):
-        self.cur.execute(f"""
-        SELECT id, nombre, apellido 
-        FROM {self.esquema}.usuarios WHERE id = (%s)""", (id_usuario,))
-        registro = self.cur.fetchone()
-        if( registro):
-            return User(registro[1], registro[2], registro[0])
-        return None
+    
     
     def usuario_email(self, email):
         self.cur.execute(f"""
-        SELECT password
-        FROM {self.esquema}.personal WHERE email = (%s)""", (email,))
+        SELECT u.id, u.nombre, u.apellido, p.rol, p.password, p.email
+        FROM {self.esquema}.usuarios u
+        INNER JOIN {self.esquema}.personal p ON u.id = p.user_id
+        WHERE p.email = (%s)
+        """, (email,))
+        
 
-        registro = self.cur.fetchone()
-        if (registro):
-            return registro[0]
-        return None
+        res = self.cur.fetchone()
+        accesos = self.verAccesos(res[0])
+        usuario = Personal(id_usuario=res[0], 
+                           nombre=res[1], 
+                           apellido=res[2], 
+                           rol=res[3], 
+                           password=res[4],
+                           email=res[5],
+                           zonas_acceso=accesos)
+        return usuario
+
     
     def vincularCursoProfesor(self, curso_id, profesor_id, materia):
         try:
@@ -124,37 +219,111 @@ class UserRepo:
     #at_jerarquia para los casos de: 
     #-Alumno a personal
     #-Profesor a personal
-    #Pq necesitan necesaramente una contrasña de acceso
+    #Pq necesitan necesaramente una contraseña de acceso
+
+
+
     def crearJerarquia(self, id_user, rol, npassword, email):
-        #Roles: Directivo, pasante, administrador, bibliotecario
+        #Roles: Directivo, pasante, administradoro
         #Pasante: pañolero/pañolera
         try: 
-            usuario = self.buscar_usuario(id_user)
+            
             self.cur.execute(f"""
             INSERT INTO {self.esquema}.personal(user_id, rol, password, email)
-            VALUES (%s,%s,%s)
-            """, (usuario.id_usuario, rol, npassword, email))
+            VALUES (%s,%s,%s,%s)
+            """, (id_user, rol.capitalize(), npassword, email))
 
             self.conexion.commit()
 
         except Exception as e:
             self.conexion.rollback()
             raise e
+        
+    def asignarAcceso(self, id_user, accesos: List[str]):
+         
+        for acceso in accesos:
+            id = self.bsarea_id(acceso.capitalize())
+            try:
+                self.cur.execute(f"""
+                INSERT INTO {self.esquema}.usuario_area_relacion(user_id, area_id)
+                VALUES (%s,%s)
+                """,(id_user, id))
 
+                self.conexion.commit()
+            except Exception as e:
+                raise e
+
+    
     #Este es mas general, funciona si el usuario ya esta creado
     #Actualizar jerarquia personal(ya tiene un usuario - contraseña creado)
-    def actJerarquia(self, id_user, jerarquia):
-        usuario = self.buscar_usuario(id_user)
-        password = usuario.password
-        try:            
+    #Revisar metodo, no se puede ser Pasante y Directivo a la vez(consultar como reemplazar un campo)
+    def actJerarquia(self, id_user, njerarquia):
+        try:
             self.cur.execute(f"""
-            INSERT INTO {self.esquema}.personal(user_id, rol, password)
-            VALUES (%s, %s, %s)
-            """, (password, jerarquia))
+            UPDATE {self.esquema}.personal 
+            SET rol = %s
+            WHERE user_id = %s
+            """, (njerarquia.capitalize(), id_user))
+            
+            self.conexion.commit()
+            
         except Exception as e:
             self.conexion.rollback()
             raise e
+        
+    def esPersonal(self, id_user):
+        try:
+            self.cur.execute(f"""
+            SELECT user_id FROM {self.esquema}.personal 
+            WHERE user_id = %s
+            """, (id_user,))
+            
+            if self.cur.fetchone() is not None:
+                return True
+            else:
+                return False
+            
+        except Exception as e:
+            raise e
+    
+    def verAccesos(self, id_user):
+        self.cur.execute(f"""
+        SELECT area_id FROM {self.esquema}.usuario_area_relacion
+        WHERE user_id = (%s)
+        """,(id_user,))
 
+        res = self.cur.fetchall()
+        accesos = []
+        for r in res:
+            self.cur.execute(f"""
+            SELECT area FROM {self.esquema}.areas
+            WHERE area_id = (%s)
+            """,(r[0],))
+
+            acceso = self.cur.fetchall()
+            accesos.append(acceso[0][0])
+        
+        return accesos
+    
+    def eliminarAccesos(self, id_user):
+        try:
+            self.cur.execute(f"""
+            DELETE FROM {self.esquema}.usuario_area_relacion 
+            WHERE user_id = %s
+            """, (id_user,))
+            
+            self.conexion.commit()
+            
+        except Exception as e:
+            self.conexion.rollback()
+            raise e
+    
+    #Ejemplo cuando un pasante termina el año se debe eliminar su usario de la tabla Personal(junto con sus accesos)
+    def bajaPersonal(self, id_user):
+        self.cur.execute(f"""
+        DELETE FROM {self.esquema}.personal
+        WHERE user_id = (%s)
+        """,(id_user,))
     
     def buscarRelacionProfesorCurso(self, nombre_del_curso, profesor_id):
 
@@ -178,4 +347,18 @@ class UserRepo:
             return True
         else:
             return False
+
+    def buscarUsuario(self, id_user):
+        try:
+            self.cur.execute(f"""
+            SELECT id, nombre, apellido from {self.esquema}.usuarios
+            WHERE id = (%s)
+            """, (id_user,))
+
+            res = self.cur.fetchone()
+
+            usuario = User(id_usuario=res[0], nombre=res[1], apellido=res[2])
+            return usuario
+        except Exception as e:
+            raise e
 

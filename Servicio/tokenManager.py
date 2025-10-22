@@ -1,5 +1,6 @@
 from datetime import datetime, timedelta, timezone
 import os
+from typing import List
 import jwt
 from pydantic import BaseModel
 
@@ -8,9 +9,11 @@ class Token(BaseModel):
     token_type:str
 
 class PayloadData():
-    def __init__(self, id, email):
+    def __init__(self, id, email, rol, areas:List[str]):
         self.id = id
         self.email = email
+        self.rol = rol
+        self.areas = areas
         #expiracion
         self.exp = datetime.now(timezone.utc) + timedelta(minutes=30)
         #emision
@@ -23,9 +26,9 @@ class TokenManager:
         self.secret_key = secret_key
         self.expiracion = 30
         
-    def tokenResponse(self, user_id, email):
+    def tokenResponse(self, user_id, email, rol, areas:List[str]):
         try:
-            payload_data=PayloadData(id=user_id, email=email)
+            payload_data=PayloadData(id=user_id, email=email, rol=rol, areas=areas)
             payload_data_dict=payload_data.__dict__
 
             token_jwt=jwt.encode(
@@ -34,7 +37,7 @@ class TokenManager:
                 algorithm=self.algorithm
             )
         
-            return Token(acces_token=token_jwt, token_type="bearer")
+            return Token(access_token=token_jwt, token_type="bearer")
         except Exception as e:
             raise e
         

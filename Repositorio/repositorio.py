@@ -121,7 +121,6 @@ class Repositorio:
                 return nStockitem
             
             self.conexion.commit()
-            self.conexion.close()
         except Exception as e:
                 self.conexion.rollback()
                 raise e
@@ -129,9 +128,8 @@ class Repositorio:
     #Para borrar registros, elementos, etc (lo manejo bien en service)
     def borrar(self, id, tabla):
         try:
-
             if(self.buscarElemento(id)):
-                self.cur.execute(f"DELETE FROM {self.esquema}.{tabla} WHERE element_id = (%s)", (id))
+                self.cur.execute(f"DELETE FROM {self.esquema}.{tabla} WHERE element_id = (%s)", (id,))
                 self.conexion.commit()
                 return True
             else:
@@ -150,8 +148,6 @@ class Repositorio:
             """, (nEstado, id_element))
 
             self.conexion.commit()
-            self.conexion.close()
-
         except Exception as e:
             self.conexion.rollback()
             raise e
@@ -164,7 +160,6 @@ class Repositorio:
             """, (id_element,))
 
             res = self.cur.fetchone()
-            self.conexion.close()
             return res[0]
 
         except Exception as e:
@@ -224,7 +219,6 @@ class Repositorio:
                         self.actEstado(id_element, "No disponible")
 
             self.conexion.commit()
-            self.conexion.close()
         except Exception as e:
             self.conexion.rollback()
             raise e
@@ -275,7 +269,6 @@ class Repositorio:
                                isReusable=r[2])
 
             inventario.append(n)
-            self.conexion.close()
         return inventario
 
     
@@ -298,7 +291,6 @@ class Repositorio:
             ))
 
             self.conexion.commit()
-            self.conexion.close()
         except Exception as e:
             self.conexion.rollback()
             raise e
@@ -334,14 +326,14 @@ class Repositorio:
 
         #Metodo para manejar la devolucion de prestamos
     def devolver(self, registro_id):
-        #Terminado?Devuelto? no se me ocurre nada mas entendible
+        #Terminado? Devuelto? no se me ocurre nada mas entendible
         try:
 
             self.cur.execute(f"""
             UPDATE {self.esquema}.registros
             SET estado = (%s)
             WHERE registro_id = (%s)
-            ;""", ("Terminado", registro_id))
+            """, ("Terminado", registro_id))
 
             self.conexion.commit()
             self.conexion.close()

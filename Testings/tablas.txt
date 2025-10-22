@@ -154,3 +154,20 @@ FOREIGN KEY (profesor_id) REFERENCES usuarios.usuarios(id) ON DELETE CASCADE,
 FOREIGN KEY (curso_id) REFERENCES usuarios.cursos(curso_id) ON DELETE CASCADE
 )
 """)
+
+conexion.cursor.execute("""
+CREATE TABLE IF NOT EXISTS usuarios.areas(
+area_id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+area TEXT NOT NULL
+)""")
+
+
+conexion.cursor.execute("""
+CREATE TABLE IF NOT EXISTS usuarios.usuario_area_relacion(
+relacion INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+user_id INT NOT NULL,
+area_id INT NOT NULL,
+FOREIGN KEY (user_id) REFERENCES usuarios.usuarios(id),
+FOREIGN KEY (area_id) REFERENCES usuarios.areas(area_id)
+)
+""")

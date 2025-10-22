@@ -1,6 +1,5 @@
 import bcrypt
 
-
 class PasswordManager:
     def __init__(self):
         self.rounds = 12

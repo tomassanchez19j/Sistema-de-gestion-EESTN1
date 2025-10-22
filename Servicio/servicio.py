@@ -14,7 +14,7 @@ class Servicio:
     
     #Diccionario que retorna cada funcion del servicio segun el try-except
     #Estado(True-False), Mensaje(que es lo que se hizo), Data(devolver algo q me sirva al momento(id_element, etc))
-    def res(estado: bool, mensaje: str, data: Any):
+    def res(self, estado: bool, mensaje: str, data: Any):
         return {
             "success": estado,
             "message": mensaje,
@@ -59,6 +59,8 @@ class Servicio:
             hora = ahora.time()
             
             expiracion = self.calcularExpiracion(ahora)
+            if expiracion is None:
+                return (self.res(False, "No se puede realizar pedido, fuera de horario", None))
             #si es un stock y es reusable el estado es En curso
             #pero si es un elemento q no es reusable(osea q es descartable), nunca voy a tener q esperar a que se devuelva
             #directamente lo marco como consumido
@@ -84,10 +86,8 @@ class Servicio:
             )
 
             self.repositorio.crearRegistro(nRegistro)
-
             #Si es un stockitem le tengo q restar las cantidades q estan en uso, y actualizar los disponibles
             #ver funcion en el repo
-
             #si es un uniqueitem directamente pasa aestar No disponible(pq esta en uso)
             if isinstance(elemento, StockItem):
                 self.repositorio.actDisponibles(registro_base.element_id, cantidad)
@@ -95,15 +95,18 @@ class Servicio:
                 self.repositorio.actEstado(registro_base.element_id, "No disponible")
             return self.res(True, "Registro creado", None)
         except Exception as e:
-            return self.res(False, f"Error al crear registro: {str(e)}")
-
-
+            return self.res(False, f"Error al crear registro: {str(e)}", None)
 
     #Pensar en cmo extender esto
     #-se me ocurre verificar cosas como el horario en que se entrega(que sea el correcto)
     #- sera importante ver la hora de devolucion? 
     def devolver(self, registro_id):
-        self.repositorio.devolver(registro_id)
+        try:
+            self.repositorio.devolver(registro_id)
+            
+            return self.res(True, f"Se devolvio un elemento", None)
+        except Exception as e:
+            return self.res(False, f"Error al devolver elemento: {str(e)}", None)
         
     def crearElement(self, elemento: Element):
         try:
@@ -119,14 +122,14 @@ class Servicio:
         except Exception as e:
             return self.res(False, f"Error al buscar el elemento: {str(e)}", None)
 
-    def borrarElemento(self, id_element):
+    def borrar(self, id_element, tabla):
         try:
-            if(self.repositorio.borrarElemento(self, id_element)):
-                return self.res(True, f"Elemento borrado exitosamente", None)
+            if(self.repositorio.borrar(id_element, tabla)):
+                return self.res(True, f"{id_element} borrado exitosamente de la tabla {tabla}", None)
             else:
-                return self.res(False, f"Elemento con id {id_element}", None)
+                return self.res(False, f"{id_element} no encontrado en la  tabla {tabla}", None)
         except Exception as e:
-            return self.res(False, f"Error al buscar el elemento: {str(e)}", None)
+            return self.res(False, f"Error al eliminar el elemento: {str(e)}", None)
     
     def actDisponibles(self, id_element, pCantidad):
         try:
@@ -137,6 +140,10 @@ class Servicio:
 
     def verInventarioAll(self):
         res = self.repositorio.verInventarioAll()
+        return res
+    
+    def verRegistros(self):
+        res = self.repositorio.verRegistros()
         return res
     
     
